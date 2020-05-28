@@ -1,0 +1,6 @@
+*.bin
+*.blend
+*.egg
+*.gltf
+*.pyc
+__pycache__

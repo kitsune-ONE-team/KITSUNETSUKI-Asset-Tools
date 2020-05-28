@@ -1,0 +1,69 @@
+# Copyright (c) 2020 kitsune.ONE team.
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import bpy
+import json
+
+
+def get_object_properties(obj):
+    text = bpy.data.texts.get(obj.name)
+    if text:
+        return json.loads(text.as_string() or '{}')
+    else:
+        return {}
+
+
+def is_collision(obj):
+    return obj.rigid_body is not None
+
+
+def is_object_visible(obj):
+    for collection in bpy.data.collections:
+        if obj.name in collection.objects:
+            if collection.hide_viewport:
+                return False
+
+    if obj.hide_viewport:
+        return False
+
+    return True
+
+
+def set_active_object(obj):
+    bpy.context.view_layer.objects.active = obj
+
+
+def apply_modifiers(obj, triangulate=True):
+    is_activated = False
+
+    if not obj.modifiers:
+        return
+
+    # if triangulate:
+    #     bpy.ops.object.modifier_add(type='TRIANGULATE')
+    #     obj.modifiers[-1].keep_custom_normals = True
+
+    for mod in obj.modifiers:
+        if not mod or not mod.show_viewport:
+            continue
+
+        if mod.type in ('ARMATURE', 'COLLISION'):
+            continue
+
+        if not is_activated:
+            set_active_object(obj)
+            is_activated = True
+
+        bpy.ops.object.modifier_apply(modifier=mod.name)

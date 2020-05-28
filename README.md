@@ -44,6 +44,26 @@ Expected material nodes setup
 ![Nodes 2](screenshots/nodes2.png)
 
 
+NodePath tags setup
+-------------------
+
+![Text 1](screenshots/text1.png)
+
+pview output (notice the "hp" and "type" tags):
+```
+GeomNode mesh_ruby (1 geoms: S:(MaterialAttrib TextureAttrib)) [hp type] T:m(scale 10000)
+```
+
+python usage example:
+```
+ruby_mesh = self.ruby.find('**/=type=body')
+print('hp', ruby_mesh.get_tag('hp'))
+```
+outputs:
+```
+hp 100
+```
+
 blend2egg
 ---------
 

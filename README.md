@@ -47,6 +47,8 @@ Expected material nodes setup
 NodePath tags setup
 -------------------
 
+You can define object's tags using json-encoded Blender text blocks with the same name as an object.
+
 ![Text 1](screenshots/text1.png)
 
 pview output (notice the "hp" and "type" tags):

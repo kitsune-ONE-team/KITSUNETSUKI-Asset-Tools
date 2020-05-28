@@ -47,17 +47,17 @@ def parse_args():
         '-k', '--keep', action='store_true',
         help='Keep the original objects and meshes before merging.')
     parser.add_argument(
-        '-nmat', '--no-materials', action='store_true',
-        help="Don't export materials (skips textures aswell).")
-    parser.add_argument(
         '-nuv', '--no-extra-uv', action='store_true',
         help="Don't export extra non-primary UV.")
+    parser.add_argument(
+        '-nmat', '--no-materials', action='store_true',
+        help="Don't export materials (skips textures aswell).")
     parser.add_argument(
         '-ntex', '--no-textures', action='store_true',
         help="Don't export textures.")
     parser.add_argument(
         '-etex', '--empty-textures', action='store_true',
-        help="Don't export textures.")
+        help="Use placeholder images for empty texture slots.")
 
     return parser.parse_args()
 

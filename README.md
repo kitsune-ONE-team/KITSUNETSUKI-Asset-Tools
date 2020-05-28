@@ -94,9 +94,14 @@ EGG export requirements:
 * Panda3D (1.10.6+) for EGG generation
 * python-blender (2.81+) (Blender as Python module) or preinstalled Blender using the same path as Panda3D
 
-Usage:
+Exporting models:
 ```
 blend2egg --output x.egg x.blend
+```
+
+Exporting animations (from Blender actions):
+```
+blend2egg --output x_action_name.egg --export animation --action action_name x.blend
 ```
 
 
@@ -113,7 +118,7 @@ Features:
 
 It's still in experimental state, so some features are still broken:
 * Can't export animations
-* Can't export specular map
+* Can't export specular maps
 
 glTF export requirements:
 * python-blender (2.81+) (Blender as Python module) or preinstalled Blender using the same path as Panda3D
@@ -121,7 +126,7 @@ glTF export requirements:
 glTF loading requirements:
 * panda3d-gltf (0.7+)
 
-Usage:
+Exporting models:
 ```
 blend2egg --output x.gltf x.blend
 ```

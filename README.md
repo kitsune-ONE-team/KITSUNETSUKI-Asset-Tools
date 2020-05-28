@@ -23,12 +23,12 @@ Convert models from BLEND file:
 make -C examples/ruby_rose
 ```
 
-Open converted models using Panda3D and RenderPipelie (from EGG format):
+Open converted models using Panda3D and RenderPipeline (from EGG format):
 ```
 python examples/ruby_rose/scene_rp_egg.py
 ```
 
-Open converted models using Panda3D and RenderPipelie (from glTF format):
+Open converted models using Panda3D and RenderPipeline (from glTF format):
 ```
 python examples/ruby_rose/scene_rp_gltf.py
 ```

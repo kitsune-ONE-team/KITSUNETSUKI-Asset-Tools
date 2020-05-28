@@ -33,15 +33,15 @@ Open converted models using Panda3D and RenderPipelie (from glTF format):
 python examples/ruby_rose/scene_rp_gltf.py
 ```
 
-[Preview in Blender](screenshots/preview_blender.png)
-[Preview in RenderPipelie](screenshots/preview_rp.png)
+![Preview in Blender](screenshots/preview_blender.png)
+![Preview in RenderPipelie](screenshots/preview_rp.png)
 
 
 Expected material nodes setup
 -----------------------------
 
-[Nodes 1](screenshots/nodes1.png)
-[Nodes 2](screenshots/nodes2.png)
+![Nodes 1](screenshots/nodes1.png)
+![Nodes 2](screenshots/nodes2.png)
 
 
 blend2egg

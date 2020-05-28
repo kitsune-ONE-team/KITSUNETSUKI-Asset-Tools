@@ -34,7 +34,7 @@ python examples/ruby_rose/scene_rp_gltf.py
 ```
 
 ![Preview in Blender](screenshots/preview_blender.png)
-![Preview in RenderPipelie](screenshots/preview_rp1.png)
+![Preview in RenderPipeline](screenshots/preview_rp1.png)
 
 
 Expected material nodes setup

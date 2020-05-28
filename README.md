@@ -40,6 +40,19 @@ python examples/ruby_rose/scene_rp_gltf.py
 Expected material nodes setup
 -----------------------------
 
+Supported texture maps as BSDF inputs for RenderPipeline materials:
+* Base Color
+* Specular
+* Roughness
+* Normal Map
+
+Supported BSDF input values as RenderPipeline material params:
+* Metallic (RenderPipeline uses values 0 and 1 only)
+* Roughness
+* Normal Map Strength (from Normal Map Node)
+
+Some input values could be specified as separate Math Nodes.
+
 ![Nodes 1](screenshots/nodes1.png)
 ![Nodes 2](screenshots/nodes2.png)
 

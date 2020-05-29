@@ -96,19 +96,19 @@ class TextureMixin(object):
                 elif 'metallicRoughnessTexture' in type_:
                     filepath = 'textures/normal.png'
             elif type_ == 'normalTexture':
-                filepath = 'textures/specular.png',
+                filepath = 'textures/specular.png'
             elif type_ == 'emissiveTexture':
-                filepath = 'textures/roughness.png',
+                filepath = 'textures/roughness.png'
         else:
             if type(type_) == tuple:
                 if 'baseColorTexture' in type_:
                     filepath = 'textures/diffuse.png'
                 elif 'metallicRoughnessTexture' in type_:
-                    filepath = 'textures/metallic_roughness.png',
+                    filepath = 'textures/metallic_roughness.png'
             elif type_ == 'normalTexture':
                 filepath = 'textures/normal.png'
             elif type_ == 'emissiveTexture':
-                filepath = 'textures/emissive.png',
+                filepath = 'textures/emissive.png'
 
         path = os.path.dirname(self._output)
 

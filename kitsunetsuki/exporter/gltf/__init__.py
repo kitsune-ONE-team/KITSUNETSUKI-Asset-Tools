@@ -72,9 +72,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 'version': '2.0',
             },
 
-            'extensions': {
-                'BP_physics_engine': {'engine': 'bullet'},
-            },
+            # 'extensions': {
+            #     'BP_physics_engine': {'engine': 'bullet'},
+            # },
             'extensionsUsed': [],
 
             'scene': 0,
@@ -115,6 +115,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
     def _setup_node(self, node, obj=None, can_merge=False):
         if obj is not None:
+            obj_props = get_object_properties(obj)
+
             matrix = self._matrix @ get_object_matrix(obj)
             if not can_merge:
                 node.update({
@@ -124,7 +126,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 })
 
             # setup collisions
-            if is_collision(obj):
+            if is_collision(obj) and obj_props.get('type') != 'Portal':
                 collision = {}
                 node['extensions'] = {
                     'BLENDER_physics': collision,
@@ -144,8 +146,11 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 collision['collisionShapes'] = [shape]
                 collision['static'] = obj.rigid_body.type == 'PASSIVE'
 
+                # don't actually collide (ghost)
+                if (not obj.collision or not obj.collision.use):
+                    collision['intangible'] = True
+
             # setup custom properties
-            obj_props = get_object_properties(obj)
             if obj_props and 'extras' not in node:
                 node['extras'] = {}
             for k, v in obj_props.items():
@@ -321,6 +326,17 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         # separate nodes
         if not self.can_merge(obj) or self._keep:
+            obj_props = get_object_properties(obj)
+            if obj_props.get('type') == 'Portal':
+                vertices = [list(vertex.co) for vertex in obj.data.vertices]
+                gltf_node = {
+                    'name': obj.name,
+                    'extras': {'vertices': json.dumps(vertices)},
+                }
+                self._setup_node(gltf_node, obj, can_merge=False)
+                self._add_child(parent_node, gltf_node)
+                return gltf_node
+
             gltf_node, gltf_mesh = self._make_node_mesh(
                 parent_node, obj.name, obj, can_merge=False)
 

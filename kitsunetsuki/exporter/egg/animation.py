@@ -62,10 +62,10 @@ class AnimationMixin(object):
         # set animation data
         frame_start = bpy.context.scene.frame_start
         frame_end = bpy.context.scene.frame_end
-        if self._action:
-            if self._action in bpy.data.actions:
-                action = bpy.data.actions[self._action]
-                frame_start, frame_end = action.frame_range
+        if self._action and self._action in bpy.data.actions:
+            action = bpy.data.actions[self._action]
+            armature.animation_data.action = action
+            frame_start, frame_end = action.frame_range
 
         frame = float(frame_start)
         frame_int = None

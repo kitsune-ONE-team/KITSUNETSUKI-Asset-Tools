@@ -15,8 +15,9 @@ pip install .
 Using examples
 --------------
 
-The model included is not made by myself.
-The model was made by theStoff - https://sketchfab.com/3d-models/ruby-rose-2270ee59d38e409491a76451f6c6ef80
+Original model made by theStoff:
+
+https://sketchfab.com/3d-models/ruby-rose-2270ee59d38e409491a76451f6c6ef80
 
 Convert models from BLEND file:
 ```

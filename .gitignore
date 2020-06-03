@@ -1,7 +1,3 @@
-*.bin
-*.blend
 *.blend1
-*.egg
-*.gltf
 *.pyc
 __pycache__

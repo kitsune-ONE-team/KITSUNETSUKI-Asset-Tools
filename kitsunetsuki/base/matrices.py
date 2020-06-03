@@ -16,8 +16,6 @@
 import bpy
 import itertools
 
-from bpy_types import PoseBone
-
 from panda3d.core import LMatrix4d
 
 
@@ -33,41 +31,38 @@ def matrix_to_panda(matrix):
     return LMatrix4d(*itertools.chain(*map(tuple, matrix.col)))
 
 
-def _bone_matrix(bone):
-    if isinstance(bone, PoseBone):
+def get_bone_matrix_local(bone):
+    if isinstance(bone, bpy.types.PoseBone):
         return bone.matrix
-    else:
+    elif isinstance(bone, bpy.types.Bone):
         return bone.matrix_local
 
 
-def get_bone_matrix(bone, armature=None):
+def get_bone_matrix(bone, armature):
+    bone_matrix = get_bone_matrix_local(bone)
     if bone.parent:
-        return _bone_matrix(bone.parent).inverted() @ _bone_matrix(bone)
+        parent_bone_matrix = get_bone_matrix_local(bone.parent)
+        return parent_bone_matrix.inverted() @ bone_matrix
     else:  # root bone
-        if armature is None:
-            return _bone_matrix(bone)
-        else:
-            return armature.matrix_world @ _bone_matrix(bone)
-
-
-def get_inverse_bind_matrix(bone, obj, armature):
-    return bone.matrix_local.inverted() @ armature.matrix_world.inverted() @ obj.matrix_world
-
-
-def get_object_matrix_local(obj):
-    if isinstance(obj, (bpy.types.Bone, bpy.types.PoseBone)):
-        return obj.matrix
-    else:
-        return obj.matrix_local
+        return bone_matrix
 
 
 def get_object_matrix(obj, armature=None):
     if armature is None:
-        return get_object_matrix_local(obj)
-    else:
-        if obj.parent:
-            return (
-                get_object_matrix_local(obj.parent).inverted() @
-                get_object_matrix_local(obj))
-        else:
-            return armature.matrix_world @ get_object_matrix_local(obj)
+        return obj.matrix_local
+    else:  # skinned mesh/object
+        return (
+            obj.matrix_world @
+            armature.matrix_world @
+            armature.matrix_world.inverted())
+
+
+def get_inverse_bind_matrix(bone, armature):
+    if bone.parent:
+        return (
+            bone.matrix_local.inverted() @
+            armature.matrix_world.inverted())
+    else:  # root bone
+        return (
+            bone.matrix_local.inverted() @
+            armature.matrix_world.inverted())

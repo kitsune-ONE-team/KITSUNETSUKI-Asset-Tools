@@ -75,7 +75,7 @@ class GeomMixin(object):
 
         return gltf_primitive
 
-    def make_geom(self, node, obj, can_merge=False):
+    def make_geom(self, gltf_node, gltf_mesh, obj, can_merge=False):
         triangulate = True
         apply_modifiers(obj, triangulate=triangulate)
         mesh = obj2mesh(obj, triangulate=triangulate)
@@ -124,7 +124,7 @@ class GeomMixin(object):
         gltf_primitives = {}
         gltf_primitive_indices = {}
         if can_merge:
-            for i, gltf_primitive in enumerate(node['primitives']):
+            for i, gltf_primitive in enumerate(gltf_mesh['primitives']):
                 mname = None
                 if 'material' in gltf_primitive:
                     matid = gltf_primitive['material']
@@ -148,8 +148,8 @@ class GeomMixin(object):
                             joints += 1
                     max_joints = max(max_joints, joints)
 
-            if 'skin' in node:
-                gltf_skin = self._root['skins'][node['skin']]
+            if 'skin' in gltf_node:
+                gltf_skin = self._root['skins'][gltf_node['skin']]
 
                 # for i, child in enumerate(self._root['skins']):
                 #     if child['name'] == armature.name:
@@ -164,6 +164,7 @@ class GeomMixin(object):
         sharp_vertices = self.get_sharp_vertices(mesh)
         uv_tb = self.get_tangent_bitangent(mesh)
         gltf_vertices = {}
+        obj_matrix = self._matrix @ get_object_matrix(obj, armature)
 
         for polygon in mesh.polygons:
             # <-- polygon
@@ -183,7 +184,7 @@ class GeomMixin(object):
                 gltf_primitive = self._make_primitive()
                 gltf_primitives[mname] = gltf_primitive
                 gltf_primitive_indices[mname] = -1
-                node['primitives'].append(gltf_primitive)
+                gltf_mesh['primitives'].append(gltf_primitive)
 
             # set material
             if material and not self._no_materials and not is_collision(obj):
@@ -224,7 +225,7 @@ class GeomMixin(object):
 
                 # make new vertex data
                 self.make_vertex(
-                    gltf_primitive, obj, polygon, vertex,
+                    obj_matrix, gltf_primitive, polygon, vertex,
                     use_smooth=use_smooth, can_merge=can_merge)
 
                 # uv layers, active first
@@ -291,7 +292,7 @@ class GeomMixin(object):
 
                     assert len(joints_weights) == max_joint_layers
                     self._write_joints_weights(
-                        gltf_primitive, max_joints, joints_weights)
+                        gltf_primitive, len(tuple(gltf_joints.keys())), joints_weights)
 
                 # vertex -->
             # polygon -->

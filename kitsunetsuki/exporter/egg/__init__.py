@@ -17,7 +17,7 @@ import json
 import math
 
 from panda3d.core import CS_zup_right
-from panda3d.egg import EggComment, EggData, EggGroup, EggPolygon
+from panda3d.egg import EggComment, EggData, EggGroup, EggPolygon, EggTransform
 
 from kitsunetsuki.base.armature import get_armature
 from kitsunetsuki.base.collections import get_object_collection
@@ -49,18 +49,20 @@ class EggExporter(
         egg_root.set_coordinate_system(CS_zup_right)  # Z-up
 
         egg_comment = EggComment(
-            '', 'Made with KITSUNETSUKI SDK by kitsune.ONE - '
-            'https://kitsune.one/')
+            '', 'KITSUNETSUKI Asset Tools by kitsune.ONE - '
+            'https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools')
         egg_root.add_child(egg_comment)
 
         return egg_root
 
-    def _setup_node(self, node, obj=None):
+    def _setup_node(self, node, obj=None, can_merge=False):
         if obj is not None:
             armature = get_armature(obj)
-
             obj_matrix = get_object_matrix(obj, armature=armature)
-            node.add_matrix4(matrix_to_panda(obj_matrix))
+
+            # if not can_merge:
+            if not can_merge and not armature:
+                node.add_matrix4(matrix_to_panda(obj_matrix))
 
             # get custom object properties
             obj_props = get_object_properties(obj)
@@ -125,18 +127,22 @@ class EggExporter(
 
         return egg_group
 
-    def make_armature(self, parent_node, obj):
-        egg_group = EggGroup(obj.name)
+    def make_armature(self, parent_node, armature):
+        egg_group = EggGroup(armature.name)
         egg_group.set_dart_type(EggGroup.DT_structured)
 
         egg_joints = {}
 
-        for bone_name, bone in obj.data.bones.items():
-            bone_matrix = get_bone_matrix(bone, armature=obj)
+        for bone_name, bone in armature.data.bones.items():
+            bone_matrix = get_bone_matrix(bone, armature)
+
+            egg_transform = EggTransform()
+            egg_transform.add_matrix4(matrix_to_panda(bone_matrix))
 
             egg_joint = EggGroup(bone_name)
             egg_joint.set_group_type(EggGroup.GT_joint)
             egg_joint.add_matrix4(matrix_to_panda(bone_matrix))
+            egg_joint.set_default_pose(egg_transform)
 
             if bone.parent:
                 egg_joints[bone.parent.name].add_child(egg_joint)
@@ -145,7 +151,7 @@ class EggExporter(
 
             egg_joints[bone_name] = egg_joint
 
-        self._setup_node(egg_group, obj)
+        self._setup_node(egg_group, armature)
         parent_node.add_child(egg_group)
 
         return egg_group
@@ -164,7 +170,7 @@ class EggExporter(
                     break
             else:
                 egg_group = EggGroup(collection.name)
-                self._setup_node(egg_group)
+                self._setup_node(egg_group, can_merge=True)
                 parent_node.add_child(egg_group)
 
             self.make_geom(egg_group, obj, can_merge=True)
@@ -172,7 +178,7 @@ class EggExporter(
         # separate nodes
         if not self.can_merge(obj) or self._keep:
             egg_group = EggGroup(obj.name)
-            self._setup_node(egg_group, obj)
+            self._setup_node(egg_group, obj, can_merge=False)
             parent_node.add_child(egg_group)
 
             self.make_geom(egg_group, obj, can_merge=False)

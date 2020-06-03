@@ -44,6 +44,11 @@ class AnimationMixin(object):
 
             # <-- xfm_anim_s
             egg_xfm_anim_s = EggXfmSAnim('xform', CS_zup_right)
+            # set order from glTF
+            # i, j, k - scale -> s
+            # h, p, r - rotation
+            # x, y, z - location -> ?
+            # egg_xfm_anim_s.set_order('shprxyz')
             egg_xfm_anim_s.set_fps(
                 bpy.context.scene.render.fps /
                 bpy.context.scene.render.fps_base)
@@ -87,8 +92,36 @@ class AnimationMixin(object):
 
             # save bone matrices
             for bone_name, bone in armature.pose.bones.items():
+                s_anim = egg_joints_anims[bone_name]
                 bone_matrix = get_bone_matrix(bone, armature)
-                egg_joints_anims[bone_name].add_data(matrix_to_panda(bone_matrix))
+
+                # egg_joints_anims[bone_name].add_data(matrix_to_panda(bone_matrix))
+
+                i, j, k = bone_matrix.to_scale()
+                s_anim.add_component_data('i', i)
+                s_anim.add_component_data('j', j)
+                s_anim.add_component_data('k', k)
+
+                # if bone.parent:
+                #     p, r, h = tuple(map(math.degrees, bone_matrix.to_euler()))  # YABEE
+                #     s_anim.add_component_data('h', h)
+                #     s_anim.add_component_data('p', p)
+                #     s_anim.add_component_data('r', r)
+                # else:
+                #     h, r, p = tuple(map(math.degrees, bone_matrix.to_euler('XZY')))
+                #     s_anim.add_component_data('h', -h)
+                #     s_anim.add_component_data('p', p)
+                #     s_anim.add_component_data('r', r)
+
+                p, r, h = tuple(map(math.degrees, bone_matrix.to_euler('YXZ')))
+                s_anim.add_component_data('h', h)
+                s_anim.add_component_data('p', p)
+                s_anim.add_component_data('r', r)
+
+                x, y, z = bone_matrix.to_translation()
+                s_anim.add_component_data('x', x)
+                s_anim.add_component_data('y', y)
+                s_anim.add_component_data('z', z)
 
             # advance to the next frame
             frame += speed_scale

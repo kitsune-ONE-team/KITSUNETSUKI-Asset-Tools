@@ -19,14 +19,13 @@ from . import spec
 
 
 class VertexMixin(object):
-    def make_vertex(self, gltf_primitive, obj, polygon, vertex,
+    def make_vertex(self, matrix, gltf_primitive, polygon, vertex,
                     use_smooth=False, can_merge=False):
-        matrix = self._matrix @ get_object_matrix(obj)
-
-        if can_merge:
-            co = matrix @ vertex.co
-        else:
-            co = vertex.co
+        # if can_merge:
+        #     co = matrix @ vertex.co
+        # else:
+        #     co = vertex.co
+        co = matrix @ vertex.co
 
         self._buffer.write(
             gltf_primitive['attributes']['POSITION'], *tuple(co))

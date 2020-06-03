@@ -47,25 +47,24 @@ class TextureMixin(object):
 
         # check if we have patched panda3d
         have_srgb = hasattr(EggTexture, 'F_srgb_alpha')
+        num_channels = self.get_num_channels(os.path.join(path, filepath))
 
-        # if image_texture.image.colorspace_settings.name == 'sRGB':
         if type_[1] == 'Diffuse':
             if have_srgb:
-                if image_texture.image.channels == 4:
+                if num_channels == 4:
                     egg_texture.set_format(EggTexture.F_srgb_alpha)
-                elif image_texture.image.channels == 3:
+                elif num_channels == 3:
                     egg_texture.set_format(EggTexture.F_srgb)
             else:
-                if image_texture.image.channels == 4:
+                if num_channels == 4:
                     egg_texture.set_format(EggTexture.F_rgba)
-                elif image_texture.image.channels == 3:
+                elif num_channels == 3:
                     egg_texture.set_format(EggTexture.F_rgb)
 
-        # elif image_texture.image.colorspace_settings.name == 'Non-Color':
         else:
-            if image_texture.image.channels == 4:
+            if num_channels == 4:
                 egg_texture.set_format(EggTexture.F_rgba)
-            elif image_texture.image.channels == 3:
+            elif num_channels == 3:
                 egg_texture.set_format(EggTexture.F_rgb)
 
         if type_[1] == 'Diffuse':

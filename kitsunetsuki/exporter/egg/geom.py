@@ -16,6 +16,7 @@
 from panda3d.egg import (
     EggGroup, EggPolygon, EggVertexPool, EggMaterial, EggTexture)
 
+from kitsunetsuki.base.matrices import get_object_matrix
 from kitsunetsuki.base.armature import get_armature
 from kitsunetsuki.base.mesh import obj2mesh
 from kitsunetsuki.base.objects import apply_modifiers, is_collision
@@ -106,6 +107,11 @@ class GeomMixin(object):
             uv_tb = self.get_tangent_bitangent(mesh)
         egg_vertices = {}
 
+        obj_matrix = get_object_matrix(obj, armature)
+        parent_obj_matrix = obj_matrix
+        if armature:
+            parent_obj_matrix = get_object_matrix(armature)
+
         for polygon in mesh.polygons:
             # <-- polygon
             material = None
@@ -168,7 +174,8 @@ class GeomMixin(object):
 
                 # make new vertex data
                 egg_vertex = self.make_vertex(
-                    obj, polygon, vertex, use_smooth=use_smooth)
+                    parent_obj_matrix, obj_matrix, polygon, vertex,
+                    use_smooth=use_smooth)
 
                 # uv layers
                 if not is_collision(obj):
@@ -183,10 +190,11 @@ class GeomMixin(object):
 
                         egg_vertex_uv = self.make_vertex_uv(uv_layer, uv_loop.uv)
                         if uv_name in uv_tb:
-                            matrix = obj.matrix_world
                             t, b, s = uv_tb[uv_name][loop_id]
-                            egg_vertex_uv.set_tangent(tuple(matrix @ t))
-                            egg_vertex_uv.set_binormal(tuple(matrix @ b))
+                            tangent = parent_obj_matrix @ t
+                            binormal = parent_obj_matrix @ b
+                            egg_vertex_uv.set_tangent(tuple(tangent))
+                            egg_vertex_uv.set_binormal(tuple(binormal))
                         egg_vertex.set_uv_obj(egg_vertex_uv)
                         # vertex uv -->
 

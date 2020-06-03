@@ -67,8 +67,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         gltf_node = {
             'asset': {
                 'generator': (
-                    'KITSUNETSUKI SDK by kitsune.ONE - '
-                    'https://kitsune.one/'),
+                    'KITSUNETSUKI Asset Tools by kitsune.ONE - '
+                    'https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools'),
                 'version': '2.0',
             },
 
@@ -115,14 +115,18 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
     def _setup_node(self, node, obj=None, can_merge=False):
         if obj is not None:
+            armature = get_armature(obj)
+            obj_matrix = get_object_matrix(obj, armature=armature)
+
+            # get custom object properties
             obj_props = get_object_properties(obj)
 
-            matrix = self._matrix @ get_object_matrix(obj)
-            if not can_merge:
+            # if not can_merge:
+            if not can_merge and not armature:
                 node.update({
-                    'rotation': quat_to_list(matrix.to_quaternion()),
-                    'scale': list(matrix.to_scale()),
-                    'translation': list(matrix.to_translation()),
+                    'rotation': quat_to_list(obj_matrix.to_quaternion()),
+                    'scale': list(obj_matrix.to_scale()),
+                    'translation': list(obj_matrix.to_translation()),
                 })
 
             # setup collisions
@@ -136,7 +140,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 shape = {
                     'shapeType': obj.rigid_body.collision_shape,
                     'boundingBox': [
-                        obj.dimensions[i] / matrix.to_scale()[i]
+                        obj.dimensions[i] / obj_matrix.to_scale()[i]
                         for i in range(3)
                     ],
                 }
@@ -177,31 +181,16 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         return gltf_node
 
-    def make_armature(self, parent_node, obj):
+    def make_armature(self, parent_node, armature):
         gltf_node = {
-            'name': obj.name,
+            'name': armature.name,
             'children': [],
         }
 
-        # channel = self._buffer.add_channel({
-        #     'componentType': spec.TYPE_FLOAT,
-        #     'type': 'MAT4',
-        #     'extra': {
-        #         'reference': 'inverseBindMatrices',
-        #     },
-        # })
-
-        # gltf_skin = {
-        #     'name': obj.name,
-        #     'joints': [],
-        #     'skeleton': len(self._root['nodes']) - 1,
-        #     'inverseBindMatrices': channel['bufferView'],
-        # }
-
         gltf_joints = {}
 
-        for bone_name, bone in obj.data.bones.items():
-            bone_matrix = get_bone_matrix(bone, obj)
+        for bone_name, bone in armature.data.bones.items():
+            bone_matrix = get_bone_matrix(bone, armature)
 
             gltf_joint = {
                 'name': bone_name,
@@ -209,13 +198,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 'rotation': quat_to_list(bone_matrix.to_quaternion()),
                 'scale': list(bone_matrix.to_scale()),
                 'translation': list(bone_matrix.to_translation()),
-                # 'extra': {
-                #     'inverseBind': {
-                #         'rotation': quat_to_list(ib_matrix.to_quaternion()),
-                #         'scale': list(ib_matrix.to_scale()),
-                #         'translation': list(ib_matrix.to_translation()),
-                #     },
-                # },
             }
 
             if bone.parent:
@@ -223,16 +205,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             else:
                 self._add_child(gltf_node, gltf_joint)
 
-            # self._buffer.write(
-            #     gltf_skin['inverseBindMatrices'],
-            #     *matrix_to_list(ib_matrix))
-
             gltf_joints[bone_name] = gltf_joint
-            # gltf_skin['joints'].append(len(self._root['nodes']) - 1)
 
-        # self._root['skins'].append(gltf_skin)
-
-        self._setup_node(gltf_node, obj)
+        self._setup_node(gltf_node, armature)
         self._add_child(parent_node, gltf_node)
 
         return gltf_node
@@ -257,7 +232,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         gltf_skin = {
             'name': '{}_{}'.format(obj.name, armature.name),
             'joints': [],
-            'skeleton': gltf_armature_id,
+            # 'skeleton': gltf_armature_id,
             'inverseBindMatrices': channel['bufferView'],
         }
         self._root['skins'].append(gltf_skin)
@@ -271,7 +246,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             else:
                 continue
 
-            ib_matrix = get_inverse_bind_matrix(bone, obj, armature)
+            ib_matrix = get_inverse_bind_matrix(bone, armature)
             self._buffer.write(
                 gltf_skin['inverseBindMatrices'],
                 *matrix_to_list(ib_matrix))
@@ -340,7 +315,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_node, gltf_mesh = self._make_node_mesh(
                 parent_node, obj.name, obj, can_merge=False)
 
-            self.make_geom(gltf_mesh, obj, can_merge=False)
+            self.make_geom(gltf_node, gltf_mesh, obj, can_merge=False)
 
         return gltf_node
 

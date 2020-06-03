@@ -20,8 +20,6 @@ ruby_anim.egg: ruby.blend
 
 EGG_FILES = ruby.egg ruby_anim.egg
 
-egg: $(EGG_FILES)
-
 # GLTF FILES
 
 ruby.gltf: ruby.blend
@@ -34,6 +32,8 @@ GLTF_FILES = ruby.gltf ruby_anim.gltf
 
 # RULES
 
+egg: $(EGG_FILES)
+
 gltf: $(GLTF_FILES)
 
 all: $(EGG_FILES) $(GLTF_FILES)
@@ -42,4 +42,4 @@ all: $(EGG_FILES) $(GLTF_FILES)
 pack: ruby.blend.xz rubyAnimated002.fbx.xz
 
 clean:
-	rm -fv $(EGGs) $(GLTFs)
+	rm -fv $(EGG_FILES) $(GLTF_FILES) ruby.blend

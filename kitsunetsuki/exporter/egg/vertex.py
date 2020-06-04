@@ -26,17 +26,22 @@ class VertexMixin(object):
             return uv_layer.name.replace(' ', '_')
 
     def make_vertex(self, parent_obj_matrix, obj_matrix, polygon, vertex,
-                    use_smooth=False):
+                    use_smooth=False, can_merge=False):
         egg_vertex = EggVertex()
         egg_vertex.set_color((1, 1, 1, 1))
 
-        co = obj_matrix @ vertex.co
+        if can_merge:
+            co = obj_matrix @ vertex.co
+        else:
+            co = vertex.co
+
         egg_vertex.set_pos(tuple(co))
 
         if use_smooth:
             normal = parent_obj_matrix @ vertex.normal
         else:
             normal = parent_obj_matrix @ polygon.normal
+
         egg_vertex.set_normal(tuple(normal))
 
         return egg_vertex

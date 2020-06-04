@@ -248,7 +248,7 @@ class GeomMixin(object):
                         self._write_uv(gltf_primitive, uv_id, u, v)
                         if uv_name in uv_tb and uv_layer.active:
                             self._write_tbs(
-                                gltf_primitive, obj, *uv_tb[uv_name][loop_id],
+                                obj_matrix, gltf_primitive, *uv_tb[uv_name][loop_id],
                                 can_merge=can_merge)
                         # vertex uv -->
 

@@ -145,7 +145,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                     ],
                 }
                 if obj.rigid_body.collision_shape == 'MESH':
-                    shape['mesh'] = node['mesh']
+                    shape['mesh'] = node.pop('mesh')
 
                 collision['collisionShapes'] = [shape]
                 collision['static'] = obj.rigid_body.type == 'PASSIVE'
@@ -256,17 +256,27 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         return gltf_skin
 
     def _make_node_mesh(self, parent_node, name, obj=None, can_merge=False):
-        gltf_mesh = {
-            'name': name,
-            'primitives': [],
-        }
-        self._root['meshes'].append(gltf_mesh)
-
         gltf_node = {
             'name': name,
             'children': [],
-            'mesh': len(self._root['meshes']) - 1,
         }
+
+        gltf_mesh = None
+        need_mesh = False
+        if obj:
+            if obj.rigid_body is None:
+                need_mesh = True
+            elif obj.rigid_body.collision_shape == 'MESH':
+                need_mesh = True
+        else:
+            need_mesh = True
+        if need_mesh:
+            gltf_mesh = {
+                'name': name,
+                'primitives': [],
+            }
+            self._root['meshes'].append(gltf_mesh)
+            gltf_node['mesh'] = len(self._root['meshes']) - 1
 
         armature = obj and get_armature(obj)
         if armature:
@@ -297,7 +307,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 gltf_node, gltf_mesh = self._make_node_mesh(
                     parent_node, collection.name, can_merge=True)
 
-            self.make_geom(gltf_mesh, obj, can_merge=True)
+            if gltf_mesh:
+                self.make_geom(gltf_node, gltf_mesh, obj, can_merge=True)
 
         # separate nodes
         if not self.can_merge(obj) or self._keep:
@@ -315,7 +326,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_node, gltf_mesh = self._make_node_mesh(
                 parent_node, obj.name, obj, can_merge=False)
 
-            self.make_geom(gltf_node, gltf_mesh, obj, can_merge=False)
+            if gltf_mesh:
+                self.make_geom(gltf_node, gltf_mesh, obj, can_merge=False)
 
         return gltf_node
 

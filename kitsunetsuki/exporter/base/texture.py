@@ -13,17 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from panda3d.core import PNMImage, PNMFileTypeRegistry
-
 from kitsunetsuki.base.material import get_root_node, get_from_node
 
 
 class TextureMixin(object):
-    def get_num_channels(self, filepath):
-        image = PNMImage()
-        image.read(filepath)
-        return image.get_num_channels()
-
     def get_diffuse(self, material, shader):
         for i in ('Color', 'Alpha'):
             # Image Texture [Color/Alpha] -> [Socket] Principled BSDF

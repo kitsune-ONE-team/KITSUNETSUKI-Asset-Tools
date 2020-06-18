@@ -18,10 +18,6 @@ import os
 from . import spec
 
 
-DEFAULT_TEXTURE_TYPES = (
-)
-
-
 class TextureMixin(object):
     def get_images(self, material, shader):
         if self._render_type == 'rp':  # custom texture order for RP

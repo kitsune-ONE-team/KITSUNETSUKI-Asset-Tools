@@ -15,10 +15,16 @@
 
 import os
 
+from panda3d.core import PNMImage
 from panda3d.egg import EggTexture
 
 
 class TextureMixin(object):
+    def get_num_channels(self, filepath):
+        image = PNMImage()
+        image.read(filepath)
+        return image.get_num_channels()
+
     def get_images(self, material, shader):
         if self._render_type == 'rp':  # custom texture order for RP
             return (

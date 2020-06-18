@@ -108,7 +108,7 @@ Features:
 
 EGG export requirements:
 * Panda3D (1.10.6+) for EGG generation
-* python-blender (2.81+) (Blender as Python module) or preinstalled Blender using the same path as Panda3D
+* python-blender (2.81+) (Blender as Python module) or Blender's Python
 
 Exporting models:
 ```
@@ -137,7 +137,7 @@ It's still in experimental state, so some features are still broken:
 * Can't export specular maps
 
 glTF export requirements:
-* python-blender (2.81+) (Blender as Python module) or preinstalled Blender using the same path as Panda3D
+* python-blender (2.81+) (Blender as Python module) or Blender's Python
 
 glTF loading requirements:
 * panda3d-gltf (0.7+)

@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument(
         'input', type=str, help='Input .blend file path.')
     parser.add_argument(
-        '-b', '--background', type=str, required=False,
+        '-b', '--background', action='store_true', required=False,
         help="Blender's argument placeholder.")
     parser.add_argument(
         '-P', '--python', type=str, required=False,

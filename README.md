@@ -7,8 +7,17 @@ Collection of asset tools designed for automated pipeline.
 Installation
 ------------
 
+**Install into Python**
+
 ```
 pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
+```
+
+**Install into Blender's Python**
+
+```
+2.83/python/bin/python3.7m -m ensurepip
+2.83/python/bin/python3.7m -m pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
 

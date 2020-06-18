@@ -8,7 +8,7 @@ Installation
 ------------
 
 ```
-pip install .
+pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
 

@@ -7,11 +7,20 @@ Collection of asset tools designed for automated pipeline.
 Installation
 ------------
 
+**Installing into Anaconda/Miniconda Python**
+
+```
+conda install -c kitsune.one python-blender
+pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
+```
+
+
 **Installing into Python**
 
 ```
 pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
+
 
 **Installing into Blender's Python**
 
@@ -19,6 +28,7 @@ pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 2.83/python/bin/python3.7m -m ensurepip
 2.83/python/bin/python3.7m -m pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
+
 
 **Running asset tools from Blender's Python**
 

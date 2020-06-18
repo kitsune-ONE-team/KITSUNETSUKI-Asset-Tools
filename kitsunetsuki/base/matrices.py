@@ -16,8 +16,6 @@
 import bpy
 import itertools
 
-from panda3d.core import LMatrix4d
-
 
 def quat_to_list(quat):
     return [quat.x, quat.y, quat.z, quat.w]
@@ -25,10 +23,6 @@ def quat_to_list(quat):
 
 def matrix_to_list(matrix):
     return list(itertools.chain(*map(tuple, matrix.col)))
-
-
-def matrix_to_panda(matrix):
-    return LMatrix4d(*itertools.chain(*map(tuple, matrix.col)))
 
 
 def get_bone_matrix_local(bone):

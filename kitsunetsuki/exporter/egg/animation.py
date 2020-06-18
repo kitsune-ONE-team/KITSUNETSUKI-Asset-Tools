@@ -17,7 +17,7 @@ import bpy
 import collections
 import math
 
-from kitsunetsuki.base.matrices import get_bone_matrix, matrix_to_panda
+from kitsunetsuki.base.matrices import get_bone_matrix
 
 from panda3d.core import CS_zup_right
 from panda3d.egg import EggTable, EggXfmSAnim

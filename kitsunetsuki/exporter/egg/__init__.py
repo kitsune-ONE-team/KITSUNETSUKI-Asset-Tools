@@ -15,14 +15,14 @@
 
 import json
 import math
+import itertools
 
-from panda3d.core import CS_zup_right
+from panda3d.core import CS_zup_right, LMatrix4d
 from panda3d.egg import EggComment, EggData, EggGroup, EggPolygon, EggTransform
 
 from kitsunetsuki.base.armature import get_armature
 from kitsunetsuki.base.collections import get_object_collection
-from kitsunetsuki.base.matrices import (
-    get_object_matrix, get_bone_matrix, matrix_to_panda)
+from kitsunetsuki.base.matrices import get_object_matrix, get_bone_matrix
 from kitsunetsuki.base.objects import is_collision, get_object_properties
 
 from kitsunetsuki.exporter.base import Exporter
@@ -32,6 +32,10 @@ from .geom import GeomMixin
 from .material import MaterialMixin
 from .texture import TextureMixin
 from .vertex import VertexMixin
+
+
+def matrix_to_panda(matrix):
+    return LMatrix4d(*itertools.chain(*map(tuple, matrix.col)))
 
 
 class EggExporter(

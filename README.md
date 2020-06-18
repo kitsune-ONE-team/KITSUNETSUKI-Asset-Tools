@@ -7,17 +7,23 @@ Collection of asset tools designed for automated pipeline.
 Installation
 ------------
 
-**Install into Python**
+**Installing into Python**
 
 ```
 pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
-**Install into Blender's Python**
+**Installing into Blender's Python**
 
 ```
 2.83/python/bin/python3.7m -m ensurepip
 2.83/python/bin/python3.7m -m pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
+```
+
+**Running asset tools from Blender's Python**
+
+```
+blender -b -P 2.83/python/lib/python3.7/site-packages/kitsunetsuki/blend2gltf.py model.blend --output model.gltf
 ```
 
 

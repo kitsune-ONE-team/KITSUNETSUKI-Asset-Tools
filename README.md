@@ -7,7 +7,10 @@ Collection of asset tools designed for automated pipeline.
 Installation
 ------------
 
-**Installing into Anaconda/Miniconda Python**
+**Installing into [Anaconda](https://www.anaconda.com/products/individual) / [Miniconda](https://docs.conda.io/en/latest/miniconda.html) Python**
+
+This is an easiest way to install.
+It uses prebuilt Blender's Python module from Anaconda Cloud. You can also build one by yourself.
 
 ```
 conda install -c kitsune.one python-blender
@@ -17,12 +20,19 @@ pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 
 **Installing into Python**
 
+This is the most difficult way to install.
+You have to find the Blender's Python module or build it by yourself.
+
 ```
 pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
 
-**Installing into Blender's Python**
+**Installing into [Blender](https://www.blender.org/download/) Python**
+
+The installation process is a little bit tricky for this one.
+You need to install Python modules into Blender's Python and run Python scripts with Blender.
+You can't run scripts which depends on Panda3D, for example *blend2egg*.
 
 ```
 2.83/python/bin/python3.7m -m ensurepip
@@ -30,7 +40,7 @@ pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
 
-**Running asset tools from Blender's Python**
+**Running asset tools from [Blender](https://www.blender.org/download/) Python**
 
 ```
 blender -b -P 2.83/python/lib/python3.7/site-packages/kitsunetsuki/blend2gltf.py model.blend --output model.gltf

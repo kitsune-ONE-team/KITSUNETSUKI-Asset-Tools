@@ -72,9 +72,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 'version': '2.0',
             },
 
-            # 'extensions': {
-            #     'BP_physics_engine': {'engine': 'bullet'},
-            # },
+            'extensions': {
+                # 'BP_physics_engine': {'engine': 'bullet'},
+            },
             'extensionsUsed': [],
 
             'scene': 0,

@@ -113,6 +113,7 @@ class AnimationMixin(object):
                 #     s_anim.add_component_data('p', p)
                 #     s_anim.add_component_data('r', r)
 
+                # hpr == zxy ?
                 p, r, h = tuple(map(math.degrees, bone_matrix.to_euler('YXZ')))
                 s_anim.add_component_data('h', h)
                 s_anim.add_component_data('p', p)

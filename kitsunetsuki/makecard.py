@@ -18,6 +18,8 @@ import argparse
 
 from kitsunetsuki.cardmaker import CardMaker
 
+from panda3d.core import Filename, VirtualFileSystem, get_model_path
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -35,13 +37,18 @@ def parse_args():
         '--input', type=str, help='input files', nargs='+')
     parser.add_argument(
         '--empty', type=str, help='empty frame file')
+    parser.add_argument(
+        '--prefix', type=str, help='texture path prefix')
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
-    animations_frames = map(int, args.frames.split(','))
+    if args.frames:
+        animations_frames = map(int, args.frames.split(','))
+    else:
+        animations_frames = [len(args.input)]
 
     kwargs = {}
     if args.fps:
@@ -52,6 +59,16 @@ def main():
         kwargs['type'] = args.type
     if args.empty:
         kwargs['empty'] = args.empty
+    if args.prefix:
+        kwargs['prefix'] = args.prefix
+
+    if args.prefix:
+        vfs = VirtualFileSystem.get_global_ptr()
+        vfs.mount(
+            Filename.from_os_specific('.').get_fullpath(),
+            args.prefix.rstrip('/'), 0)
+        mp = get_model_path()
+        mp.prepend_directory(args.prefix.rstrip('/'))
 
     cm = CardMaker(animations_frames, args.input, **kwargs)
     cm.make(args.output)

@@ -23,13 +23,15 @@ from panda3d.egg import (
 
 
 class CardMaker(object):
-    def __init__(self, animations_frames, images, empty=None, fps=30, scale=1, type='png'):
+    def __init__(self, animations_frames, images, empty=None, prefix=None,
+                 fps=30, scale=1, type='png'):
         self.animations = {}
         for i, frames in enumerate(animations_frames):
             self.animations[i] = frames
         self.images = images
         if empty:
             self.images.insert(0, empty)
+        self.prefix = prefix or ''
         self.fps = fps
         self.scale = scale
         self.type = type
@@ -165,7 +167,7 @@ class CardMaker(object):
         self._make_spritesheet(spritesheet)
 
         name = os.path.basename(spritesheet).rpartition('.')[0]
-        egg_texture = EggTexture(name, spritesheet)
+        egg_texture = EggTexture(name, '{}{}'.format(self.prefix, spritesheet))
         egg_vertex_pool = EggVertexPool('vpool')
 
         egg_root.add_child(egg_comment)

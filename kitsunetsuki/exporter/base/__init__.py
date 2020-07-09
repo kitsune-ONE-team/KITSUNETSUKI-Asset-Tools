@@ -30,6 +30,7 @@ NOT_MERGED_TYPES = (
     'Text',
     'Sprite',
     'Transparent',
+    'Protected',
 )
 
 
@@ -48,6 +49,9 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
 
         # animations
         self._speed_scale = args.speed or 1
+
+        # geom scale
+        self._geom_scale = args.scale or 1
 
         # scripting
         self._script_name = args.exec

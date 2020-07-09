@@ -114,61 +114,75 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             parent_node['children'].append(node_id)
 
     def _setup_node(self, node, obj=None, can_merge=False):
-        if obj is not None:
-            armature = get_armature(obj)
-            obj_matrix = get_object_matrix(obj, armature=armature)
+        if obj is None:
+            return
 
-            # get custom object properties
-            obj_props = get_object_properties(obj)
+        armature = get_armature(obj)
+        obj_matrix = get_object_matrix(obj, armature=armature)
 
-            # if not can_merge:
-            if not can_merge and not armature:
+        # get custom object properties
+        obj_props = get_object_properties(obj)
+
+        if not can_merge and not armature:
+            if self._geom_scale == 1:
                 node.update({
                     'rotation': quat_to_list(obj_matrix.to_quaternion()),
                     'scale': list(obj_matrix.to_scale()),
                     'translation': list(obj_matrix.to_translation()),
                 })
+            else:
+                x, y, z = list(obj_matrix.to_translation())
+                x *= self._geom_scale
+                y *= self._geom_scale
+                z *= self._geom_scale
+                node.update({
+                    'rotation': quat_to_list(obj_matrix.to_quaternion()),
+                    'scale': list(obj_matrix.to_scale()),
+                    'translation': [x, y, z],
+                })
 
-            # setup collisions
-            if is_collision(obj) and obj_props.get('type') != 'Portal':
-                collision = {}
-                node['extensions'] = {
-                    'BLENDER_physics': collision,
-                }
+        # setup collisions
+        if not can_merge and is_collision(obj) and obj_props.get('type') != 'Portal':
+            collision = {}
+            node['extensions'] = {
+                'BLENDER_physics': collision,
+            }
 
-                # collision shape
-                shape = {
-                    'shapeType': obj.rigid_body.collision_shape,
-                    'boundingBox': [
-                        obj.dimensions[i] / obj_matrix.to_scale()[i]
-                        for i in range(3)
-                    ],
-                }
-                if obj.rigid_body.collision_shape == 'MESH':
-                    shape['mesh'] = node.pop('mesh')
+            # collision shape
+            shape = {
+                'shapeType': obj.rigid_body.collision_shape,
+                'boundingBox': [
+                    obj.dimensions[i] / obj_matrix.to_scale()[i]
+                    for i in range(3)
+                ],
+            }
+            if obj.rigid_body.collision_shape == 'MESH':
+                shape['mesh'] = node.pop('mesh')
 
-                collision['collisionShapes'] = [shape]
-                collision['static'] = obj.rigid_body.type == 'PASSIVE'
+            collision['collisionShapes'] = [shape]
+            collision['static'] = obj.rigid_body.type == 'PASSIVE'
 
-                # don't actually collide (ghost)
-                if (not obj.collision or not obj.collision.use):
-                    collision['intangible'] = True
+            # don't actually collide (ghost)
+            if (not obj.collision or not obj.collision.use):
+                collision['intangible'] = True
 
-            # setup custom properties
-            if obj_props and 'extras' not in node:
-                node['extras'] = {}
-            for k, v in obj_props.items():
-                if node['extras'].get(k):  # tag exists
-                    tag = node['extras'].get(k)
+        # setup custom properties with tags
+        if (obj_props or can_merge) and 'extras' not in node:
+            node['extras'] = {}
 
-                    if k == 'type':
-                        continue
+        for k, v in obj_props.items():
+            if node['extras'].get(k):  # tag exists
+                tag = node['extras'].get(k)
 
-                if type(v) in (tuple, list, dict):
-                    tag = json.dumps(v)
-                else:
-                    tag = '{}'.format(v)
-                node['extras'][k] = tag
+            if type(v) in (tuple, list, dict):
+                tag = json.dumps(v)
+            else:
+                tag = '{}'.format(v)
+
+            node['extras'][k] = tag
+
+        if can_merge and 'type' not in obj_props:
+            node['extras']['type'] = 'Merged'
 
     def make_empty(self, parent_node, obj):
         gltf_node = {
@@ -263,13 +277,14 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         gltf_mesh = None
         need_mesh = False
-        if obj:
+        if can_merge:
+            need_mesh = True
+        else:
             if obj.rigid_body is None:
                 need_mesh = True
             elif obj.rigid_body.collision_shape == 'MESH':
                 need_mesh = True
-        else:
-            need_mesh = True
+
         if need_mesh:
             gltf_mesh = {
                 'name': name,
@@ -305,7 +320,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                     break
             else:
                 gltf_node, gltf_mesh = self._make_node_mesh(
-                    parent_node, collection.name, can_merge=True)
+                    parent_node, collection.name, obj, can_merge=True)
 
             if gltf_mesh:
                 self.make_geom(gltf_node, gltf_mesh, obj, can_merge=True)

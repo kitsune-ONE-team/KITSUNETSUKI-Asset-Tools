@@ -36,6 +36,10 @@ class GeomMixin(object):
 
     def make_geom(self, node, obj, can_merge=False):
         triangulate = not is_collision(obj)
+        if self._geom_scale != 1:
+            obj.scale.x = self._geom_scale
+            obj.scale.y = self._geom_scale
+            obj.scale.z = self._geom_scale
         apply_modifiers(obj, triangulate=triangulate)
         mesh = obj2mesh(obj, triangulate=triangulate)
 

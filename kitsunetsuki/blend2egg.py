@@ -44,7 +44,9 @@ def parse_args():
         '-a', '--action', type=str, required=False,
         help='Action name to export.')
     parser.add_argument(
-        '-s', '--speed', type=float, required=False, help='Animations speed scale.')
+        '-sp', '--speed', type=float, required=False, help='Animations speed scale.')
+    parser.add_argument(
+        '-sc', '--scale', type=float, required=False, help='Geom scale.')
     parser.add_argument(
         '-m', '--merge', action='store_true',
         help='Merge objects and meshes inside the collection.')

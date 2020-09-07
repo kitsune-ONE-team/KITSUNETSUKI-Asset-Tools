@@ -118,7 +118,8 @@ class EggExporter(
                 tag = '{}'.format(v)
             node.set_tag(k, tag)
 
-        if can_merge and 'type' not in obj_props:
+        # if can_merge and 'type' not in obj_props:
+        if can_merge:
             node.set_tag('type', 'Merged')
 
     def make_empty(self, parent_node, obj):

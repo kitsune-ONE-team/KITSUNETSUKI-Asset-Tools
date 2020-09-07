@@ -152,7 +152,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             shape = {
                 'shapeType': obj.rigid_body.collision_shape,
                 'boundingBox': [
-                    obj.dimensions[i] / obj_matrix.to_scale()[i]
+                    obj.dimensions[i] / obj_matrix.to_scale()[i] * self._geom_scale
                     for i in range(3)
                 ],
             }
@@ -181,7 +181,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
             node['extras'][k] = tag
 
-        if can_merge and 'type' not in obj_props:
+        # if can_merge and 'type' not in obj_props:
+        if can_merge:
             node['extras']['type'] = 'Merged'
 
     def make_empty(self, parent_node, obj):
@@ -270,6 +271,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         return gltf_skin
 
     def _make_node_mesh(self, parent_node, name, obj=None, can_merge=False):
+        """
+        Make glTF-node - glTF-mesh pair for chosen Blender object.
+        """
         gltf_node = {
             'name': name,
             'children': [],
@@ -305,6 +309,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         return gltf_node, gltf_mesh
 
     def make_mesh(self, parent_node, obj):
+        """
+        Make mesh-type object.
+        """
         gltf_node = None
 
         # merged nodes
@@ -313,12 +320,15 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
             for child in self._root['nodes']:
                 if child['name'] == collection.name:
+                    # got existing glTF node
                     gltf_node = child
 
                     mesh_id = gltf_node['mesh']
+                    # got existing glTF mesh
                     gltf_mesh = self._root['meshes'][mesh_id]
                     break
-            else:
+            else:  # glTF-node - glTF-mesh pair not found
+                # create new pair
                 gltf_node, gltf_mesh = self._make_node_mesh(
                     parent_node, collection.name, obj, can_merge=True)
 
@@ -347,6 +357,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         return gltf_node
 
     def make_light(self, parent_node, obj):
+        """
+        Make light-type object.
+        """
         LIGHT_TYPES = {
             'POINT': 'PointLight',
             'SPOT': 'SpotLight',

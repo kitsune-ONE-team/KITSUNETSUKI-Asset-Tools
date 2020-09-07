@@ -78,10 +78,12 @@ class GeomMixin(object):
     def make_geom(self, gltf_node, gltf_mesh, obj, can_merge=False):
         triangulate = True
         if self._geom_scale != 1:
-            obj.scale.x = self._geom_scale
-            obj.scale.y = self._geom_scale
-            obj.scale.z = self._geom_scale
-        apply_modifiers(obj, triangulate=triangulate)
+            scale = obj.scale
+            obj.scale.x, obj.scale.y, obj.scale.z = [self._geom_scale] * 3
+            apply_modifiers(obj, triangulate=triangulate, apply_scale=True)
+            obj.scale = scale
+        else:
+            apply_modifiers(obj, triangulate=triangulate)
         mesh = obj2mesh(obj, triangulate=triangulate)
 
         # get or create materials and textures
@@ -228,9 +230,14 @@ class GeomMixin(object):
                         continue
 
                 # make new vertex data
-                self.make_vertex(
-                    obj_matrix, gltf_primitive, polygon, vertex,
-                    use_smooth=use_smooth, can_merge=can_merge)
+                if is_collision(obj):
+                    self.make_vertex(
+                        obj_matrix, gltf_primitive, polygon, vertex,
+                        use_smooth=use_smooth, can_merge=True)
+                else:
+                    self.make_vertex(
+                        obj_matrix, gltf_primitive, polygon, vertex,
+                        use_smooth=use_smooth, can_merge=can_merge)
 
                 # uv layers, active first
                 active_uv = 0, 0

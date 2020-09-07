@@ -43,7 +43,7 @@ You can't run scripts which depends on Panda3D, for example *blend2egg*.
 **Running asset tools from [Blender](https://www.blender.org/download/) Python**
 
 ```
-blender -b -P 2.83/python/lib/python3.7/site-packages/kitsunetsuki/blend2gltf.py model.blend --output model.gltf
+blender -b -P 2.83/python/lib/python3.7/site-packages/kitsunetsuki/blend2gltf.py model.blend -o model.gltf
 ```
 
 

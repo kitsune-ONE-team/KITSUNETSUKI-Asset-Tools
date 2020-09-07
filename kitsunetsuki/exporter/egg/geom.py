@@ -33,14 +33,16 @@ class GeomMixin(object):
                 results.update(self._get_joints(child))
 
         return results
-
+q
     def make_geom(self, node, obj, can_merge=False):
         triangulate = not is_collision(obj)
         if self._geom_scale != 1:
             obj.scale.x = self._geom_scale
             obj.scale.y = self._geom_scale
             obj.scale.z = self._geom_scale
-        apply_modifiers(obj, triangulate=triangulate)
+            apply_modifiers(obj, triangulate=triangulate, apply_scale=True)
+        else:
+            apply_modifiers(obj, triangulate=triangulate)
         mesh = obj2mesh(obj, triangulate=triangulate)
 
         # get or create materials and textures

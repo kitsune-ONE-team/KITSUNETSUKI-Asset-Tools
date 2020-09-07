@@ -31,6 +31,7 @@ NOT_MERGED_TYPES = (
     'Sprite',
     'Transparent',
     'Protected',
+    'Dynamic',
 )
 
 

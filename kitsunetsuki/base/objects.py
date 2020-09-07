@@ -45,11 +45,8 @@ def set_active_object(obj):
     bpy.context.view_layer.objects.active = obj
 
 
-def apply_modifiers(obj, triangulate=True):
+def apply_modifiers(obj, triangulate=False, apply_scale=False):
     is_activated = False
-
-    if not obj.modifiers:
-        return
 
     # if triangulate:
     #     bpy.ops.object.modifier_add(type='TRIANGULATE')
@@ -65,5 +62,10 @@ def apply_modifiers(obj, triangulate=True):
         if not is_activated:
             set_active_object(obj)
             is_activated = True
-
         bpy.ops.object.modifier_apply(modifier=mod.name)
+
+    if apply_scale:
+        if not is_activated:
+            set_active_object(obj)
+            is_activated = True
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)

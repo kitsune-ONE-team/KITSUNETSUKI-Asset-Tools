@@ -79,6 +79,7 @@ class VertexMixin(object):
 
     def _write_joints_weights(self, gltf_primitive, joints_num, joints_weights):
         for i, joint_weight in enumerate(joints_weights):
+            # prepare joints buffer channel
             joints = 'JOINTS_{}'.format(i)
             if joints not in gltf_primitive['attributes']:
                 if joints_num > 255:
@@ -99,6 +100,7 @@ class VertexMixin(object):
             assert len(keys) == 4
             self._buffer.write(gltf_primitive['attributes'][joints], *keys)
 
+            # prepare weights buffer channel
             weights = 'WEIGHTS_{}'.format(i)
             if weights not in gltf_primitive['attributes']:
                 channel = self._buffer.add_channel({

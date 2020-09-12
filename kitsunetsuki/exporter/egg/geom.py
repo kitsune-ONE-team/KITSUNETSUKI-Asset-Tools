@@ -33,7 +33,7 @@ class GeomMixin(object):
                 results.update(self._get_joints(child))
 
         return results
-q
+
     def make_geom(self, node, obj, can_merge=False):
         triangulate = not is_collision(obj)
         if self._geom_scale != 1:

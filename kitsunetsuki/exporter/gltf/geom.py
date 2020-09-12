@@ -164,8 +164,8 @@ class GeomMixin(object):
                 gltf_joints = self._get_joints(gltf_skin)
 
         # get max joint layers (4 bones per layer)
-        max_joint_layers = math.ceil(max_joints / 4)
-        # max_joint_layers = 1
+        # max_joint_layers = math.ceil(max_joints / 4)
+        max_joint_layers = 1
 
         sharp_vertices = self.get_sharp_vertices(mesh)
         uv_tb = self.get_tangent_bitangent(mesh)
@@ -214,20 +214,20 @@ class GeomMixin(object):
                     not is_collision(obj))
 
                 # try to reuse shared vertices
-                if (polygon.use_smooth and
-                        vertex_id in gltf_vertices and
-                        not is_collision(obj)):
-                    shared = False
-                    for gltf_vertex in gltf_vertices[vertex_id]:
-                        loop_id = polygon.loop_indices[i]
-                        gltf_vertex_uv = gltf_vertex[1]
-                        if self.can_share_vertex(mesh, loop_id, gltf_vertex_uv):
-                            self._buffer.write(
-                                gltf_primitive['indices'], gltf_vertex[0])
-                            shared = True
-                            break
-                    if shared:
-                        continue
+                # if (polygon.use_smooth and
+                #         vertex_id in gltf_vertices and
+                #         not is_collision(obj)):
+                #     shared = False
+                #     for gltf_vertex in gltf_vertices[vertex_id]:
+                #         loop_id = polygon.loop_indices[i]
+                #         gltf_vertex_uv = gltf_vertex[1]
+                #         if self.can_share_vertex(mesh, loop_id, gltf_vertex_uv):
+                #             self._buffer.write(
+                #                 gltf_primitive['indices'], gltf_vertex[0])
+                #             shared = True
+                #             break
+                #     if shared:
+                #         continue
 
                 # make new vertex data
                 if is_collision(obj):
@@ -278,32 +278,50 @@ class GeomMixin(object):
 
                 # attach joints to vertex
                 if gltf_joints:
-                    joints_weights = []  # list of vec4
+                    joints_weights = []
                     vertex_groups = reversed(sorted(
                         vertex.groups, key=lambda vg: vg.weight))
                     for vertex_group in vertex_groups:
                         obj_vertex_group = obj.vertex_groups[vertex_group.group]
-                        if (obj_vertex_group.name in gltf_joints and
-                                vertex_group.weight > 0):
-                            if not joints_weights or len(joints_weights[-1]) >= 4:
-                                if len(joints_weights) >= max_joint_layers:
-                                    break
-                                joints_weights.append([])
-                            joint_id = gltf_joints[obj_vertex_group.name]
-                            joint_weight = joint_id, vertex_group.weight
-                            joints_weights[-1].append(joint_weight)  # push to vec4
+
+                        # no bones with vertex group's name
+                        if obj_vertex_group.name not in gltf_joints:
+                            continue
+
+                        # weight is zero
+                        if vertex_group.weight <= 0:
+                            continue
+
+                        joint_id = gltf_joints[obj_vertex_group.name]
+                        joints_weights.append([joint_id, vertex_group.weight])
 
                     # padding
-                    if joints_weights:
-                        while len(joints_weights[-1]) < 4:  # up to vec4
-                            joints_weights[-1].append((0, 0))  # push to vec4
-                    while len(joints_weights) < max_joint_layers:  # up to max joints
-                        vec4 = [(0, 0)] * 4  # make empty vec4
-                        joints_weights.append(vec4)
+                    while ((len(joints_weights) % 4 != 0) or
+                            (len(joints_weights) < max_joint_layers * 4)):
+                        joints_weights.append((0, 0))
 
-                    assert len(joints_weights) == max_joint_layers
+                    # limit by max joints
+                    joints_weights = joints_weights[:max_joint_layers * 4]
+
+                    # imax = -1
+                    # wmax = 0
+                    # for i, (joint, weight) in enumerate(joints_weights):
+                    #     if weight > wmax:
+                    #         imax = i
+                    #         wmax = weight
+                    # if imax >= 0:
+                    #     joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
+
+                    # group by 4 joint-weight pairs
+                    joints_weights_groups = []
+                    for i in range(len(joints_weights) // 4):
+                        group = joints_weights[i * 4: i * 4 + 4]
+                        joints_weights_groups.append(group)
+
                     self._write_joints_weights(
-                        gltf_primitive, len(tuple(gltf_joints.keys())), joints_weights)
+                        gltf_primitive,
+                        len(tuple(gltf_joints.keys())),
+                        joints_weights_groups)
 
                 # vertex -->
             # polygon -->

@@ -143,16 +143,16 @@ class GeomMixin(object):
         max_joints = 0  # get max joints per vertex
         gltf_joints = {}
         if armature:
-            max_joints = 1
-            for polygon in mesh.polygons:
-                for vertex_id in polygon.vertices:
-                    vertex = mesh.vertices[vertex_id]
-                    joints = 0
-                    for vertex_group in vertex.groups:
-                        obj_vertex_group = obj.vertex_groups[vertex_group.group]
-                        if vertex_group.weight > 0:
-                            joints += 1
-                    max_joints = max(max_joints, joints)
+            # max_joints = 1
+            # for polygon in mesh.polygons:
+            #     for vertex_id in polygon.vertices:
+            #         vertex = mesh.vertices[vertex_id]
+            #         joints = 0
+            #         for vertex_group in vertex.groups:
+            #             obj_vertex_group = obj.vertex_groups[vertex_group.group]
+            #             if vertex_group.weight > 0:
+            #                 joints += 1
+            #         max_joints = max(max_joints, joints)
 
             if 'skin' in gltf_node:
                 gltf_skin = self._root['skins'][gltf_node['skin']]
@@ -165,6 +165,8 @@ class GeomMixin(object):
 
         # get max joint layers (4 bones per layer)
         # max_joint_layers = math.ceil(max_joints / 4)
+
+        # panda3d-gltf is limited to 1 single layer only (up to 4 bones)
         max_joint_layers = 1
 
         sharp_vertices = self.get_sharp_vertices(mesh)
@@ -237,7 +239,8 @@ class GeomMixin(object):
                 else:
                     self.make_vertex(
                         obj_matrix, gltf_primitive, polygon, vertex,
-                        use_smooth=use_smooth, can_merge=can_merge)
+                        use_smooth=use_smooth, can_merge=True)
+                        # use_smooth=use_smooth, can_merge=can_merge)
 
                 # uv layers, active first
                 active_uv = 0, 0
@@ -303,14 +306,14 @@ class GeomMixin(object):
                     # limit by max joints
                     joints_weights = joints_weights[:max_joint_layers * 4]
 
-                    # imax = -1
-                    # wmax = 0
-                    # for i, (joint, weight) in enumerate(joints_weights):
-                    #     if weight > wmax:
-                    #         imax = i
-                    #         wmax = weight
-                    # if imax >= 0:
-                    #     joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
+                    imax = -1
+                    wmax = 0
+                    for i, (joint, weight) in enumerate(joints_weights):
+                        if weight > wmax:
+                            imax = i
+                            wmax = weight
+                    if imax >= 0:
+                        joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
 
                     # group by 4 joint-weight pairs
                     joints_weights_groups = []

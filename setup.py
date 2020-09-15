@@ -39,6 +39,7 @@ setup(
             'blend2gltf=kitsunetsuki.blend2gltf:main',
             'blend2egg=kitsunetsuki.blend2egg:main',
             'makecard=kitsunetsuki.makecard:main',
+            'gltf-inspect=kitsunetsuki.gltf_inspect:main',
         ),
     },
 )

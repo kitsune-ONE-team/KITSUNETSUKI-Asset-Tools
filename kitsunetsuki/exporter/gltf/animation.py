@@ -16,6 +16,7 @@
 import bpy
 import collections
 import copy
+import decimal
 import math
 
 from kitsunetsuki.base.matrices import get_bone_matrix, quat_to_list
@@ -43,18 +44,19 @@ class AnimationMixin(object):
         return gltf_sampler
 
     def make_action(self, node, armature):
-        gltf_armature = self.make_armature(node, armature)
-        self._setup_node(gltf_armature, armature)
-        self._add_child(self._root, gltf_armature)
+        self.make_armature(node, armature)
+        # gltf_armature = self.make_armature(node, armature)
+        # self._setup_node(gltf_armature, armature)
+        # self._add_child(self._root, gltf_armature)
 
-        gltf_skin = self._make_skin(armature, armature)
-        gltf_node = {
-            'name': 'ARMATURE',
-            'children': [],
-            'skin': len(self._root['skins']) - 1,
-        }
+        # gltf_skin = self._make_skin(armature)
+        # gltf_node = {
+        #     'name': 'ARMATURE',
+        #     'children': [],
+        #     'skin': len(self._root['skins']) - 1,
+        # }
         # self._setup_node(gltf_node, armature)
-        self._add_child(gltf_armature, gltf_node)
+        # self._add_child(gltf_armature, gltf_node)
 
         # <-- animation
         gltf_animation = {
@@ -63,29 +65,29 @@ class AnimationMixin(object):
             'samplers': [],
         }
 
-        # time or animation frame
-        channel = self._buffer.add_channel({
-            'componentType': spec.TYPE_FLOAT,
-            'type': 'SCALAR',
-            'extra': {
-                'reference': 'input',
-            },
-        })
-        input_id = channel['bufferView']
-
         # setup bones
         gltf_channels = {}
         gltf_samplers = []
         for bone_name, bone in armature.data.bones.items():
-            gltf_joint = None
+            gltf_joint_id = None
             for i, child in enumerate(self._root['nodes']):
                 if child['name'] == bone_name:
-                    gltf_joint = i
+                    gltf_joint_id = i
                     break
 
             gltf_target = {}
-            if gltf_joint is not None:
-                gltf_target['node'] = gltf_joint
+            if gltf_joint_id is not None:
+                gltf_target['node'] = gltf_joint_id
+
+            # time or animation frame
+            channel = self._buffer.add_channel({
+                'componentType': spec.TYPE_FLOAT,
+                'type': 'SCALAR',
+                'extra': {
+                    'reference': 'input',
+                },
+            })
+            input_id = channel['bufferView']
 
             for path in ('rotation', 'scale', 'translation'):
                 gltf_samplers.append(self._make_sampler(path, input_id))
@@ -110,7 +112,10 @@ class AnimationMixin(object):
 
         frame = float(frame_start)
         frame_int = None
-        input_ = 0
+        t = decimal.Decimal(0)
+        fps = bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
+        dt = decimal.Decimal(1 / fps)
+        t += dt
         while frame <= frame_end:
             # switch frame
             if frame_int != math.floor(frame):
@@ -147,11 +152,11 @@ class AnimationMixin(object):
                 gltf_sampler = gltf_samplers[gltf_channel['sampler']]
                 self._buffer.write(gltf_sampler['output'], *translation)
 
-                self._buffer.write(gltf_sampler['input'], input_)
+                self._buffer.write(gltf_sampler['input'], float(t))
 
             # advance to the next frame
             frame += speed_scale
-            input_ += 1
+            t += dt
 
         # animation -->
 

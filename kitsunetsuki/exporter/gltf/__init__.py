@@ -197,45 +197,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         return gltf_node
 
     def make_armature(self, parent_node, armature):
-        gltf_node = {
-            'name': armature.name,
-            'children': [],
-        }
-
-        gltf_joints = {}
-
-        for bone_name, bone in armature.data.bones.items():
-            bone_matrix = get_bone_matrix(bone, armature)
-
-            gltf_joint = {
-                'name': bone_name,
-                'children': [],
-                'rotation': quat_to_list(bone_matrix.to_quaternion()),
-                'scale': list(bone_matrix.to_scale()),
-                'translation': list(bone_matrix.to_translation()),
-            }
-
-            if bone.parent:
-                self._add_child(gltf_joints[bone.parent.name], gltf_joint)
-            else:
-                self._add_child(gltf_node, gltf_joint)
-
-            gltf_joints[bone_name] = gltf_joint
-
-        self._setup_node(gltf_node, armature)
-        self._add_child(parent_node, gltf_node)
-
-        return gltf_node
-
-    def _make_skin(self, obj, armature):
-        gltf_armature_id = None
-        for i, child in enumerate(self._root['nodes']):
-            if child['name'] == armature.name:
-                gltf_armature_id = i
-                break
-        else:
-            return
-
         channel = self._buffer.add_channel({
             'componentType': spec.TYPE_FLOAT,
             'type': 'MAT4',
@@ -244,31 +205,59 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             },
         })
 
+        gltf_node = {
+            'name': armature.name,
+            'children': [],
+        }
         gltf_skin = {
-            'name': '{}_{}'.format(obj.name, armature.name),
+            'name': armature.name,
             'joints': [],
             # 'skeleton': gltf_armature_id,
             'inverseBindMatrices': channel['bufferView'],
         }
         self._root['skins'].append(gltf_skin)
 
-        for bone_name, bone in armature.data.bones.items():
-            gltf_joint_id = None
-            for i, child in enumerate(self._root['nodes']):
-                if child['name'] == bone_name:
-                    gltf_joint_id = i
-                    break
-            else:
-                continue
+        gltf_joints = {}
+        for bone_name in sorted(armature.data.bones.keys()):
+            bone = armature.data.bones[bone_name]
 
+            # create joint node
+            pose_bone = armature.pose.bones[bone_name]
+            pose_bone_matrix = get_bone_matrix(pose_bone, armature)
+            gltf_joint = {
+                'name': bone_name,
+                'children': [],
+                'rotation': quat_to_list(pose_bone_matrix.to_quaternion()),
+                'scale': list(pose_bone_matrix.to_scale()),
+                'translation': list(pose_bone_matrix.to_translation()),
+            }
+            if bone.parent:
+                self._add_child(gltf_joints[bone.parent.name], gltf_joint)
+            else:
+                self._add_child(gltf_node, gltf_joint)
+            gltf_joints[bone_name] = gltf_joint
+
+            # add joint to skin
+            gltf_joint_id = len(self._root['nodes']) - 1
             ib_matrix = get_inverse_bind_matrix(bone, armature)
             self._buffer.write(
                 gltf_skin['inverseBindMatrices'],
                 *matrix_to_list(ib_matrix))
-
             gltf_skin['joints'].append(gltf_joint_id)
 
-        return gltf_skin
+        self._setup_node(gltf_node, armature)
+        self._add_child(parent_node, gltf_node)
+
+        # no meshes or animation only
+        if (not list(filter(is_object_visible, armature.children)) or
+                self._export_type == 'animation'):
+            gltf_child_node = {
+                'name': '{}_EMPTY'.format(armature.name),
+                'skin': len(self._root['skins']) - 1,
+            }
+            self._add_child(gltf_node, gltf_child_node)
+
+        return gltf_node
 
     def _make_node_mesh(self, parent_node, name, obj=None, can_merge=False):
         """
@@ -299,9 +288,10 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         armature = obj and get_armature(obj)
         if armature:
-            gltf_skin = self._make_skin(obj, armature)
-            if gltf_skin:
-                gltf_node['skin'] = len(self._root['skins']) - 1
+            for i, gltf_skin in enumerate(self._root['skins']):
+                if gltf_skin['name'] == armature.name:
+                    gltf_node['skin'] = i
+                    break
 
         self._setup_node(gltf_node, obj, can_merge=can_merge)
         self._add_child(parent_node, gltf_node)

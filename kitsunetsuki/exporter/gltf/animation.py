@@ -30,7 +30,7 @@ class AnimationMixin(object):
         channel = self._buffer.add_channel({
             'componentType': spec.TYPE_FLOAT,
             'type': 'VEC4' if path == 'rotation' else 'VEC3',
-            'extra': {
+            'extras': {
                 'reference': path,
             },
         })
@@ -39,8 +39,8 @@ class AnimationMixin(object):
             'interpolation': 'LINEAR',
             'input': input_id,
             'output': channel['bufferView'],
-            'extra': {
-                'bone': bone.name,
+            'extras': {
+                'joint': bone.name,
             }
         }
         return gltf_sampler
@@ -76,7 +76,7 @@ class AnimationMixin(object):
             channel = self._buffer.add_channel({
                 'componentType': spec.TYPE_FLOAT,
                 'type': 'SCALAR',
-                'extra': {
+                'extras': {
                     'reference': 'input',
                 },
             })
@@ -88,8 +88,8 @@ class AnimationMixin(object):
                 gltf_channel = {
                     'sampler': len(gltf_samplers) - 1,
                     'target': copy.copy(gltf_target),
-                    'extra': {
-                        'bone': bone.name,
+                    'extras': {
+                        'joint': bone.name,
                     }
                 }
                 gltf_channel['target']['path'] = path

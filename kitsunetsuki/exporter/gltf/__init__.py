@@ -201,7 +201,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         channel = self._buffer.add_channel({
             'componentType': spec.TYPE_FLOAT,
             'type': 'MAT4',
-            'extra': {
+            'extras': {
                 'reference': 'inverseBindMatrices',
             },
         })

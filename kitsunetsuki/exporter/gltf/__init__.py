@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
+import collections
 import json
 import math
 import mathutils  # make sure to "import bpy" before
@@ -219,34 +220,30 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         # create joint nodes
         gltf_joints = {}
-        for bone_name, bone in armature.data.bones.items():
-            pose_bone = armature.pose.bones[bone_name]
-            pose_bone_matrix = get_bone_matrix(pose_bone, armature)
+        for bone_name, bone in armature.pose.bones.items():
+            bone_matrix = get_bone_matrix(bone, armature)
             gltf_joint = {
                 'name': bone_name,
                 'children': [],
-                'rotation': quat_to_list(pose_bone_matrix.to_quaternion()),
-                'scale': list(pose_bone_matrix.to_scale()),
-                'translation': list(pose_bone_matrix.to_translation()),
+                'rotation': quat_to_list(bone_matrix.to_quaternion()),
+                'scale': list(bone_matrix.to_scale()),
+                'translation': list(bone_matrix.to_translation()),
             }
-            if bone.parent:
-                self._add_child(gltf_joints[bone.parent.name], gltf_joint)
-            else:
-                self._add_child(gltf_armature, gltf_joint)
             gltf_joints[bone_name] = gltf_joint
 
         # add joints to skin
         for bone_name in sorted(gltf_joints.keys()):
-            gltf_joint_id = None
-            for i, gltf_node in enumerate(self._root['nodes']):
-                if gltf_node['name'] == bone_name:
-                    gltf_joint_id = i
+            bone = armature.data.bones[bone_name]
+            if bone.parent:  # attach joint to parent joint
+                self._add_child(gltf_joints[bone.parent.name], gltf_joints[bone.name])
+            else:  # attach joint to armature
+                self._add_child(gltf_armature, gltf_joints[bone.name])
 
             ib_matrix = get_inverse_bind_matrix(bone, armature)
             self._buffer.write(
                 gltf_skin['inverseBindMatrices'],
                 *matrix_to_list(ib_matrix))
-            gltf_skin['joints'].append(gltf_joint_id)
+            gltf_skin['joints'].append(len(self._root['nodes']) - 1)
 
         self._setup_node(gltf_armature, armature)
         self._add_child(parent_node, gltf_armature)

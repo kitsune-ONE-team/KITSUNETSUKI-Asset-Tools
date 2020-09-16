@@ -232,15 +232,9 @@ class GeomMixin(object):
                 #         continue
 
                 # make new vertex data
-                if is_collision(obj):
-                    self.make_vertex(
-                        obj_matrix, gltf_primitive, polygon, vertex,
-                        use_smooth=use_smooth, can_merge=True)
-                else:
-                    self.make_vertex(
-                        obj_matrix, gltf_primitive, polygon, vertex,
-                        use_smooth=use_smooth, can_merge=True)
-                        # use_smooth=use_smooth, can_merge=can_merge)
+                self.make_vertex(
+                    obj_matrix, gltf_primitive, polygon, vertex,
+                    use_smooth=use_smooth)
 
                 # uv layers, active first
                 active_uv = 0, 0
@@ -262,8 +256,8 @@ class GeomMixin(object):
                         self._write_uv(gltf_primitive, uv_id, u, v)
                         if uv_name in uv_tb and uv_layer.active:
                             self._write_tbs(
-                                obj_matrix, gltf_primitive, *uv_tb[uv_name][loop_id],
-                                can_merge=can_merge)
+                                obj_matrix, gltf_primitive,
+                                *uv_tb[uv_name][loop_id])
                         # vertex uv -->
 
                 # generate new ID, add vertex and save last ID

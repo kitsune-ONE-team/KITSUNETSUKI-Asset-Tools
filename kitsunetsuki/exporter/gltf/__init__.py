@@ -205,7 +205,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             },
         })
 
-        gltf_node = {
+        gltf_armature = {
             'name': armature.name,
             'children': [],
         }
@@ -217,11 +217,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         }
         self._root['skins'].append(gltf_skin)
 
+        # create joint nodes
         gltf_joints = {}
-        for bone_name in sorted(armature.data.bones.keys()):
-            bone = armature.data.bones[bone_name]
-
-            # create joint node
+        for bone_name, bone in armature.data.bones.items():
             pose_bone = armature.pose.bones[bone_name]
             pose_bone_matrix = get_bone_matrix(pose_bone, armature)
             gltf_joint = {
@@ -234,19 +232,24 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             if bone.parent:
                 self._add_child(gltf_joints[bone.parent.name], gltf_joint)
             else:
-                self._add_child(gltf_node, gltf_joint)
+                self._add_child(gltf_armature, gltf_joint)
             gltf_joints[bone_name] = gltf_joint
 
-            # add joint to skin
-            gltf_joint_id = len(self._root['nodes']) - 1
+        # add joints to skin
+        for bone_name in sorted(gltf_joints.keys()):
+            gltf_joint_id = None
+            for i, gltf_node in enumerate(self._root['nodes']):
+                if gltf_node['name'] == bone_name:
+                    gltf_joint_id = i
+
             ib_matrix = get_inverse_bind_matrix(bone, armature)
             self._buffer.write(
                 gltf_skin['inverseBindMatrices'],
                 *matrix_to_list(ib_matrix))
             gltf_skin['joints'].append(gltf_joint_id)
 
-        self._setup_node(gltf_node, armature)
-        self._add_child(parent_node, gltf_node)
+        self._setup_node(gltf_armature, armature)
+        self._add_child(parent_node, gltf_armature)
 
         # no meshes or animation only
         if (not list(filter(is_object_visible, armature.children)) or
@@ -255,9 +258,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 'name': '{}_EMPTY'.format(armature.name),
                 'skin': len(self._root['skins']) - 1,
             }
-            self._add_child(gltf_node, gltf_child_node)
+            self._add_child(gltf_armature, gltf_child_node)
 
-        return gltf_node
+        return gltf_armature
 
     def _make_node_mesh(self, parent_node, name, obj=None, can_merge=False):
         """

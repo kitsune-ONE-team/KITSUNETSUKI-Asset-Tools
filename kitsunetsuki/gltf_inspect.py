@@ -53,7 +53,10 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None):
         if 'skin' in gltf_node:
             skin_id = gltf_node['skin']
             gltf_skin = gltf_data['skins'][skin_id]
-            refs.append(('skin', gltf_skin['name']))
+            v = '{} ({} joints)'.format(
+                gltf_skin['name'],
+                len(gltf_skin['joints']))
+            refs.append(('skin', v))
 
         if 'mesh' in gltf_node:
             mesh_id = gltf_node['mesh']

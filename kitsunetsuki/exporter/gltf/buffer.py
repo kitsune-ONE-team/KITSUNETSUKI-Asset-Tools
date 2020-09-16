@@ -70,7 +70,7 @@ class GLTFBuffer(object):
                 'buffer': len(parent_node['buffers']),
                 'byteLength': len(part),
                 'byteOffset': offset,
-                'extras': metadata['extras'],
+                'extras': metadata.get('extras') or {},
             }
             parent_node['bufferViews'].append(view)
 

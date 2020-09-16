@@ -39,7 +39,7 @@ class GeomMixin(object):
         gltf_primitive = {
             'attributes': {},
             'material': 0,
-            'extra': {
+            'extras': {
                 'highest_index': -1,
             },
         }
@@ -47,7 +47,7 @@ class GeomMixin(object):
         channel = self._buffer.add_channel({
             'componentType': spec.TYPE_UNSIGNED_SHORT,
             'type': 'SCALAR',
-            'extra': {
+            'extras': {
                 'reference': 'indices',
             },
         })
@@ -58,7 +58,7 @@ class GeomMixin(object):
             'type': 'VEC3',
             # 'max': [1] * 3,
             # 'min': [-1] * 3,
-            'extra': {
+            'extras': {
                 'reference': 'NORMAL',
             },
         })
@@ -67,7 +67,7 @@ class GeomMixin(object):
         channel = self._buffer.add_channel({
             'componentType': spec.TYPE_FLOAT,
             'type': 'VEC3',
-            'extra': {
+            'extras': {
                 'reference': 'POSITION',
             },
         })
@@ -136,7 +136,7 @@ class GeomMixin(object):
                     matid = gltf_primitive['material']
                     mname = self._root['materials'][matid]['name']
                 gltf_primitives[mname] = gltf_primitive
-                gltf_primitive_indices[mname] = gltf_primitive['extra']['highest_index']
+                gltf_primitive_indices[mname] = gltf_primitive['extras']['highest_index']
 
         # get armature and joints
         armature = get_armature(obj)
@@ -270,7 +270,7 @@ class GeomMixin(object):
                 gltf_primitive_indices[mname] += 1
                 self._buffer.write(
                     gltf_primitive['indices'], gltf_primitive_indices[mname])
-                gltf_primitive['extra']['highest_index'] = gltf_primitive_indices[mname]
+                gltf_primitive['extras']['highest_index'] = gltf_primitive_indices[mname]
 
                 # save vertex data for sharing
                 if vertex_id not in gltf_vertices:

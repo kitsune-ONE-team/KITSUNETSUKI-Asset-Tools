@@ -34,7 +34,7 @@ def parse_args():
         help='Output .gltf file path.')
     parser.add_argument(
         '-e', '--export', type=str, required=False, default='all',
-        help='Export type: all/animation.')
+        help='Export type: all/animation/collision.')
     parser.add_argument(
         '-r', '--render', type=str, required=False, default='default',
         help='Render type: default/rp.')
@@ -45,9 +45,11 @@ def parse_args():
         '-a', '--action', type=str, required=False,
         help='Action name to export.')
     parser.add_argument(
-        '-sp', '--speed', type=float, required=False, help='Animations speed scale.')
+        '-sp', '--speed', type=float, required=False,
+        help='Animations speed scale.')
     parser.add_argument(
-        '-sc', '--scale', type=float, required=False, help='Geom scale.')
+        '-sc', '--scale', type=float, required=False,
+        help='Geom scale.')
     parser.add_argument(
         '-m', '--merge', action='store_true',
         help='Merge objects and meshes inside the collection.')
@@ -66,6 +68,9 @@ def parse_args():
     parser.add_argument(
         '-etex', '--empty-textures', action='store_true',
         help="Use placeholder images for empty texture slots.")
+    parser.add_argument(
+        '-sorg', '--set-origin', action='store_true',
+        help="Set origin to center of bounds for collisions.")
 
     return parser.parse_args()
 

@@ -46,6 +46,7 @@ class GLTFBuffer(object):
         type_ = {
             spec.TYPE_UNSIGNED_BYTE: 'B',
             spec.TYPE_UNSIGNED_SHORT: 'H',
+            spec.TYPE_UNSIGNED_INT: 'I',
             spec.TYPE_FLOAT: 'f',
         }[self._metadata[channel_id]['componentType']]
 

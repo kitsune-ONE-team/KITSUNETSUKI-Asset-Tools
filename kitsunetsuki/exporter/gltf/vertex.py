@@ -20,16 +20,25 @@ from . import spec
 
 class VertexMixin(object):
     def make_vertex(self, obj_matrix, gltf_primitive, polygon, vertex,
-                    use_smooth=False):
-        co = obj_matrix @ vertex.co
+                    use_smooth=False, can_merge=False):
+        if can_merge:
+            co = obj_matrix @ vertex.co
+        else:
+            co = vertex.co
 
         self._buffer.write(
             gltf_primitive['attributes']['POSITION'], *tuple(co))
 
         if use_smooth:
-            normal = obj_matrix.to_euler().to_matrix() @ vertex.normal
+            if can_merge:
+                normal = obj_matrix.to_euler().to_matrix() @ vertex.normal
+            else:
+                normal = vertex.normal
         else:
-            normal = obj_matrix.to_euler().to_matrix() @ polygon.normal
+            if can_merge:
+                normal = obj_matrix.to_euler().to_matrix() @ polygon.normal
+            else:
+                normal = polygon.normal
 
         self._buffer.write(
             gltf_primitive['attributes']['NORMAL'], *tuple(normal))
@@ -49,7 +58,7 @@ class VertexMixin(object):
         self._buffer.write(
             gltf_primitive['attributes'][texcoord], u, 1 - v)
 
-    def _write_tbs(self, obj_matrix, gltf_primitive, t, b, s):
+    def _write_tbs(self, obj_matrix, gltf_primitive, t, b, s, can_merge=False):
         if 'TANGENT' not in gltf_primitive['attributes']:
             channel = self._buffer.add_channel({
                 'componentType': spec.TYPE_FLOAT,
@@ -60,7 +69,10 @@ class VertexMixin(object):
             })
             gltf_primitive['attributes']['TANGENT'] = channel['bufferView']
 
-        x, y, z = obj_matrix @ t
+        if can_merge:
+            x, y, z = obj_matrix @ t
+        else:
+            x, y, z = t
 
         self._buffer.write(
             gltf_primitive['attributes']['TANGENT'], x, y, z, s)

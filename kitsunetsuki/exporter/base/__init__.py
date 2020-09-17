@@ -67,6 +67,7 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
         self._no_extra_uv = args.no_extra_uv is True
         self._no_textures = args.no_textures is True
         self._empty_textures = args.empty_textures
+        self._set_origin = args.set_origin is True
 
     def execute_script(self, name):
         script = bpy.data.texts.get(name)

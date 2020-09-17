@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-import collections
 import json
 import math
 import mathutils  # make sure to "import bpy" before
@@ -25,7 +24,7 @@ from kitsunetsuki.base.matrices import (
     get_bone_matrix, get_object_matrix, get_inverse_bind_matrix,
     matrix_to_list, quat_to_list)
 from kitsunetsuki.base.objects import (
-    is_collision, is_object_visible, get_object_properties)
+    is_collision, is_object_visible, get_object_properties, set_active_object)
 
 from kitsunetsuki.exporter.base import Exporter
 
@@ -166,6 +165,17 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             # don't actually collide (ghost)
             if (not obj.collision or not obj.collision.use):
                 collision['intangible'] = True
+
+            if self._set_origin:
+                obj.select_set(state=True)
+                set_active_object(obj)
+                x1, y1, z1 = obj.location
+                # set origin to the center of bounds
+                bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+                x2, y2, z2 = obj.location
+                if 'extras' not in node:
+                    node['extras'] = {}
+                node['extras']['origin'] = [x2 - x1, y2 - y1, z2 - z1]
 
         # setup custom properties with tags
         if (obj_props or can_merge) and 'extras' not in node:

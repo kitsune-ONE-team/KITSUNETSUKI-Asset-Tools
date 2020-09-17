@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import bpy
 import json
 import math
 import itertools
@@ -23,7 +24,8 @@ from panda3d.egg import EggComment, EggData, EggGroup, EggPolygon, EggTransform
 from kitsunetsuki.base.armature import get_armature
 from kitsunetsuki.base.collections import get_object_collection
 from kitsunetsuki.base.matrices import get_object_matrix, get_bone_matrix
-from kitsunetsuki.base.objects import is_collision, get_object_properties
+from kitsunetsuki.base.objects import (
+    is_collision, get_object_properties, set_active_object)
 
 from kitsunetsuki.exporter.base import Exporter
 
@@ -106,6 +108,15 @@ class EggExporter(
                 # don't actually collide (ghost)
                 flags |= EggGroup.CF_intangible
             node.set_collide_flags(flags)
+
+            if self._set_origin:
+                obj.select_set(state=True)
+                set_active_object(obj)
+                x1, y1, z1 = obj.location
+                # set origin to the center of bounds
+                bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+                x2, y2, z2 = obj.location
+                node.set_tag('origin', json.dumps([x2 - x1, y2 - y1, z2 - z1]))
 
         # setup custom properties with tags
         for k, v in obj_props.items():

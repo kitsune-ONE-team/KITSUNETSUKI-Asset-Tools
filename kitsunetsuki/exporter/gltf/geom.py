@@ -45,7 +45,8 @@ class GeomMixin(object):
         }
 
         channel = self._buffer.add_channel({
-            'componentType': spec.TYPE_UNSIGNED_SHORT,
+            # 'componentType': spec.TYPE_UNSIGNED_SHORT,
+            'componentType': spec.TYPE_UNSIGNED_INT,
             'type': 'SCALAR',
             'extras': {
                 'reference': 'indices',
@@ -232,9 +233,14 @@ class GeomMixin(object):
                 #         continue
 
                 # make new vertex data
-                self.make_vertex(
-                    obj_matrix, gltf_primitive, polygon, vertex,
-                    use_smooth=use_smooth)
+                if is_collision(obj):
+                    self.make_vertex(
+                        obj_matrix, gltf_primitive, polygon, vertex,
+                        use_smooth=use_smooth, can_merge=False)
+                else:
+                    self.make_vertex(
+                        obj_matrix, gltf_primitive, polygon, vertex,
+                        use_smooth=use_smooth, can_merge=can_merge)
 
                 # uv layers, active first
                 active_uv = 0, 0

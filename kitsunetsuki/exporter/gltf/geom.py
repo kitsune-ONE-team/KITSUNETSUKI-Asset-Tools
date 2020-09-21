@@ -233,14 +233,14 @@ class GeomMixin(object):
                 #         continue
 
                 # make new vertex data
-                if is_collision(obj):
-                    self.make_vertex(
-                        obj_matrix, gltf_primitive, polygon, vertex,
-                        use_smooth=use_smooth, can_merge=False)
-                else:
-                    self.make_vertex(
-                        obj_matrix, gltf_primitive, polygon, vertex,
-                        use_smooth=use_smooth, can_merge=can_merge)
+                can_merge_vertices = can_merge
+                if armature:
+                    can_merge_vertices = True
+                elif is_collision(obj):
+                    can_merge_vertices = False
+                self.make_vertex(
+                    obj_matrix, gltf_primitive, polygon, vertex,
+                    use_smooth=use_smooth, can_merge=can_merge_vertices)
 
                 # uv layers, active first
                 active_uv = 0, 0

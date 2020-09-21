@@ -179,9 +179,14 @@ class GeomMixin(object):
                         continue
 
                 # make new vertex data
+                can_merge_vertices = can_merge
+                if armature:
+                    can_merge_vertices = True
+                elif is_collision(obj):
+                    can_merge_vertices = False
                 egg_vertex = self.make_vertex(
                     parent_obj_matrix, obj_matrix, polygon, vertex,
-                    use_smooth=use_smooth)
+                    use_smooth=use_smooth, can_merge=can_merge_vertices)
 
                 # uv layers
                 if not is_collision(obj):

@@ -12,23 +12,23 @@ default: all
 
 # EGG FILES
 
-ruby.egg: ruby.blend
+ruby_mesh.egg: ruby.blend
 	blend2egg --output $@ --render rp $<
 
 ruby_anim.egg: ruby.blend
 	blend2egg --output $@ --export animation $<
 
-EGG_FILES = ruby.egg ruby_anim.egg
+EGG_FILES = ruby_mesh.egg ruby_anim.egg
 
 # GLTF FILES
 
-ruby.gltf: ruby.blend
+ruby_mesh.gltf: ruby.blend
 	blend2gltf --output $@ --render rp $<
 
 ruby_anim.gltf: ruby.blend
 	blend2gltf --output $@ --export animation $<
 
-GLTF_FILES = ruby.gltf ruby_anim.gltf
+GLTF_FILES = ruby_mesh.gltf ruby_anim.gltf
 
 # RULES
 

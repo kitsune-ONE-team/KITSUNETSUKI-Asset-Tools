@@ -27,7 +27,7 @@ class Demo(ShowBase):
         self.point_light.set_radius(20)
         self.render_pipeline.add_light(self.point_light)
 
-        self.actor = Actor('snake.egg', {'move': 'snake_anim.egg'})
+        self.actor = Actor('snake_mesh.b2e.egg', {'move': 'snake_anim.b2e.egg'})
         self.actor.reparent_to(self.render)
         self.actor.set_h(180)
         self.actor.loop('move')

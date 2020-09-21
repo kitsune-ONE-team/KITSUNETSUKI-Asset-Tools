@@ -10,7 +10,8 @@ Installation
 **Installing into [Anaconda](https://www.anaconda.com/products/individual) / [Miniconda](https://docs.conda.io/en/latest/miniconda.html) Python**
 
 This is an easiest way to install.
-It uses prebuilt Blender's Python module from Anaconda Cloud. You can also build one by yourself.
+It uses [prebuilt](https://anaconda.org/kitsune.ONE/python-blender) Blender's Python module from Anaconda Cloud.
+You can also [build](https://github.com/kitsune-ONE-team/KITSUNETSUKI-SDK/tree/master/conda/blender) one by yourself.
 
 ```
 conda install -c kitsune.one python-blender
@@ -151,9 +152,9 @@ Features:
 * Export [RenderPipeline](https://github.com/tobspr/RenderPipeline) materials
 * Export Blender-calculated tangents-bitangents
 * Export NodePath "tags" from json-encoded Blender text blocks
+* Skeletal animations
 
 It's still in experimental state, so some features are still broken:
-* Can't export animations
 * Can't export specular maps
 
 glTF export requirements:

@@ -27,9 +27,7 @@ class Demo(ShowBase):
         self.point_light.set_radius(20)
         self.render_pipeline.add_light(self.point_light)
 
-        # load animations from EGG, because glTF animations aren't supported
-        self.ruby_scene = self.loader.load_model('ruby.gltf')
-        self.ruby = Actor(self.ruby_scene.find('+Character'), {'idle': 'ruby_anim.egg'})
+        self.ruby = Actor('ruby_mesh.gltf', {'idle': 'ruby_anim.egg'})
         self.ruby.reparent_to(self.render)
         self.ruby.set_h(180)
         self.ruby.loop('idle')

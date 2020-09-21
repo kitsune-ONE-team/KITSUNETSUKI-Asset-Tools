@@ -27,7 +27,7 @@ class Demo(ShowBase):
         self.point_light.set_radius(20)
         self.render_pipeline.add_light(self.point_light)
 
-        self.ruby = Actor('ruby.egg', {'idle': 'ruby_anim.egg'})
+        self.ruby = Actor('ruby_mesh.egg', {'idle': 'ruby_anim.egg'})
         self.ruby.reparent_to(self.render)
         self.ruby.set_h(180)
         self.ruby.loop('idle')

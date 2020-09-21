@@ -27,8 +27,7 @@ class Demo(ShowBase):
         self.point_light.set_radius(20)
         self.render_pipeline.add_light(self.point_light)
 
-        # load animations from EGG, because glTF animations aren't supported
-        self.actor = Actor('snake.gltf', {'move': 'snake_anim.egg'})
+        self.actor = Actor('snake_mesh.b2g.gltf', {'move': 'snake_anim.b2g.gltf'})
         self.actor.reparent_to(self.render)
         self.actor.set_h(180)
         self.actor.loop('move')

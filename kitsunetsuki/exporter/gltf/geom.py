@@ -139,6 +139,8 @@ class GeomMixin(object):
                 gltf_primitives[mname] = gltf_primitive
                 gltf_primitive_indices[mname] = gltf_primitive['extras']['highest_index']
 
+        gltf_vertices = {}
+
         # get armature and joints
         armature = get_armature(obj)
         max_joints = 0  # get max joints per vertex
@@ -172,7 +174,6 @@ class GeomMixin(object):
 
         sharp_vertices = self.get_sharp_vertices(mesh)
         uv_tb = self.get_tangent_bitangent(mesh)
-        gltf_vertices = {}
         obj_matrix = self._matrix @ get_object_matrix(obj, armature)
 
         for polygon in mesh.polygons:
@@ -217,20 +218,21 @@ class GeomMixin(object):
                     not is_collision(obj))
 
                 # try to reuse shared vertices
-                # if (polygon.use_smooth and
-                #         vertex_id in gltf_vertices and
-                #         not is_collision(obj)):
-                #     shared = False
-                #     for gltf_vertex in gltf_vertices[vertex_id]:
-                #         loop_id = polygon.loop_indices[i]
-                #         gltf_vertex_uv = gltf_vertex[1]
-                #         if self.can_share_vertex(mesh, loop_id, gltf_vertex_uv):
-                #             self._buffer.write(
-                #                 gltf_primitive['indices'], gltf_vertex[0])
-                #             shared = True
-                #             break
-                #     if shared:
-                #         continue
+                if mname not in gltf_vertices:
+                    gltf_vertices[mname] = {}
+                if (polygon.use_smooth and vertex_id in
+                        gltf_vertices[mname] and
+                        not is_collision(obj)):
+                    shared = False
+                    for gltf_vertex_index, gltf_vertex_uv in gltf_vertices[mname][vertex_id]:
+                        loop_id = polygon.loop_indices[i]
+                        if self.can_share_vertex(mesh, loop_id, gltf_vertex_uv):
+                            self._buffer.write(
+                                gltf_primitive['indices'], gltf_vertex_index)
+                            shared = True
+                            break
+                    if shared:
+                        continue
 
                 # make new vertex data
                 can_merge_vertices = can_merge
@@ -273,9 +275,9 @@ class GeomMixin(object):
                 gltf_primitive['extras']['highest_index'] = gltf_primitive_indices[mname]
 
                 # save vertex data for sharing
-                if vertex_id not in gltf_vertices:
-                    gltf_vertices[vertex_id] = []
-                gltf_vertices[vertex_id].append((
+                if vertex_id not in gltf_vertices[mname]:
+                    gltf_vertices[mname][vertex_id] = []
+                gltf_vertices[mname][vertex_id].append((
                     gltf_primitive_indices[mname], active_uv,
                 ))
 

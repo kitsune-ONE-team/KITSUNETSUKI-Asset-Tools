@@ -79,16 +79,17 @@ class GLTFBuffer(object):
             data += part
 
         if filepath:
-            with open(filepath, 'wb') as f:
+            buffer_fp = filepath.replace('.gltf', '.bin')
+            with open(buffer_fp, 'wb') as f:
                 f.write(data)
 
             uri = os.path.relpath(
-                filepath.replace('.gltf', '.bin'),
-                os.path.dirname(self._filepath))
+                buffer_fp, os.path.dirname(self._filepath))
         else:
             uri = 'nothing.bin'
 
-        parent_node['buffers'].append({
-            'uri': uri,
-            'byteLength': len(data),
-        })
+        if len(data):
+            parent_node['buffers'].append({
+                'uri': uri,
+                'byteLength': len(data),
+            })

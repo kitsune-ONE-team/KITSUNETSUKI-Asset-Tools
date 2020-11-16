@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='kitsunetsuki-asset-tools',
-    version='0.3.3',
+    version='0.3.4',
     description='KITSUNETSUKI Asset Tools',
     long_description='KITSUNETSUKI Asset Tools',
     url='https://kitsune.one/',

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from panda3d.core import load_prc_file_data, Vec3
+from panda3d.core import load_prc_file_data, Vec3, ShaderAttrib
 
 load_prc_file_data("", '''
 win-size 1600 900
@@ -31,6 +31,11 @@ class Demo(ShowBase):
         self.ruby.reparent_to(self.render)
         self.ruby.set_h(180)
         self.ruby.loop('idle')
+
+        self.render_pipeline.set_effect(self.ruby, 'hardware_skinning.yaml', options={}, sort=25)
+        sattrib = self.ruby.get_attrib(ShaderAttrib)
+        sattrib = sattrib.set_flag(ShaderAttrib.F_hardware_skinning, True)
+        self.ruby.set_attrib(sattrib)
 
         self.controller = MovementController(self)
         self.controller.set_initial_position_hpr(

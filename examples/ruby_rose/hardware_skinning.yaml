@@ -1,0 +1,16 @@
+vertex:
+  inout: |
+    in vec4 transform_weight;
+    in uvec4 transform_index;
+    uniform mat4 p3d_TransformTable[200];
+
+  transform: |
+    mat4 skin_matrix = (
+        p3d_TransformTable[transform_index.x] * transform_weight.x +
+        p3d_TransformTable[transform_index.y] * transform_weight.y +
+        p3d_TransformTable[transform_index.z] * transform_weight.z +
+        p3d_TransformTable[transform_index.w] * transform_weight.w);
+    mat4 model_matrix = p3d_ModelMatrix * skin_matrix;
+
+    vOutput.normal = normalize(model_matrix * vec4(p3d_Normal.xyz, 0)).xyz;
+    vOutput.position = (model_matrix * p3d_Vertex).xyz;

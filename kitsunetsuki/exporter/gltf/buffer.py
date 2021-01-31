@@ -55,15 +55,23 @@ class GLTFBuffer(object):
         self._channels[channel_id].write(struct.pack(format_, *values))
         self._metadata[channel_id]['count'] += 1
 
+    def write_raw(self, channel_id, data):
+        self._channels[channel_id].write(data)
+        self._metadata[channel_id]['count'] += len(data)
+
     def count(self, channel_id):
         return self._metadata[channel_id]['count']
 
     def export(self, parent_node, filepath=None):
         offset = 0
         data = bytearray()
+        uri = 'nothing.bin'
+
+        # accessors + buffer views
         for i in range(len(self._channels)):
             channel = self._channels[i]
             metadata = self._metadata[i]
+            extras = metadata.get('extras') or {}
             parent_node['accessors'].append(metadata)
 
             part = channel.getbuffer()
@@ -71,12 +79,31 @@ class GLTFBuffer(object):
                 'buffer': len(parent_node['buffers']),
                 'byteLength': len(part),
                 'byteOffset': offset,
-                'extras': metadata.get('extras') or {},
+                'extras': extras,
             }
             parent_node['bufferViews'].append(view)
 
             offset += len(part)
             data += part
+
+        # embedded images + buffer views
+        for gltf_image in parent_node.get('images', []):
+            extras = gltf_image.get('extras') or {}
+
+            if 'uri' in extras:
+                with open(extras['uri'], 'rb') as f:
+                    part = f.read()
+                    view = {
+                        'buffer': len(parent_node['buffers']),
+                        'byteLength': len(part),
+                        'byteOffset': offset,
+                        'extras': extras,
+                    }
+                    parent_node['bufferViews'].append(view)
+                    gltf_image['bufferView'] = len(parent_node['bufferViews']) - 1
+
+                    offset += len(part)
+                    data += part
 
         if filepath:
             buffer_fp = filepath.replace('.gltf', '.bin')
@@ -85,11 +112,13 @@ class GLTFBuffer(object):
 
             uri = os.path.relpath(
                 buffer_fp, os.path.dirname(self._filepath))
-        else:
-            uri = 'nothing.bin'
 
         if len(data):
-            parent_node['buffers'].append({
-                'uri': uri,
+            gltf_buffer = {
                 'byteLength': len(data),
-            })
+            }
+            if filepath:
+                gltf_buffer['uri'] = uri
+            parent_node['buffers'].append(gltf_buffer)
+
+        return data

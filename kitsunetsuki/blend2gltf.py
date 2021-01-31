@@ -16,6 +16,7 @@
 
 import argparse
 import json
+import struct
 
 
 def parse_args():
@@ -84,10 +85,33 @@ def main():
     out, buf = e.convert()
 
     if args.output:
-        buf.export(out, args.output.replace('.gltf', '.bin'))
-        with open(args.output, 'w') as f:
-            # json.dump(out, f)
-            json.dump(out, f, indent=4)
+        if args.output.endswith('.gltf'):
+            buf.export(out, args.output.replace('.gltf', '.bin'))
+            with open(args.output, 'w') as f:
+                json.dump(out, f, indent=4)
+
+        else:
+            with open(args.output, 'wb') as f:
+                chunk1 = buf.export(out)
+                chunk0 = json.dumps(out, indent=4).encode()
+
+                f.write(b'glTF')  # header
+                f.write(struct.pack('<I', 2))  # version
+
+                size = (
+                    4 + 4 + 4 +
+                    4 + 4 + len(chunk0) +
+                    4 + 4 + len(chunk1))
+                f.write(struct.pack('<I', size))  # full size
+
+                f.write(struct.pack('<I', len(chunk0)))
+                f.write(b'JSON')
+                f.write(chunk0)
+
+                f.write(struct.pack('<I', len(chunk1)))
+                f.write(b'BIN\0')
+                f.write(chunk1)
+
     else:
         buf.export(out)
         print(json.dumps(out, indent=4))

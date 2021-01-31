@@ -69,9 +69,16 @@ class TextureMixin(object):
 
         gltf_image = {
             'name': image_texture.image.name,
-            'uri': os.path.join(path, filepath),
             'mimeType': 'image/{}'.format(image_texture.image.file_format.lower()),
         }
+
+        # gltf_image['uri'] = os.path.join(path, filepath)
+        if self._output.endswith('.gltf'):  # external texture
+            gltf_image['uri'] = os.path.join(path, filepath)
+        else:  # embedded texture
+            gltf_image['extras'] = {
+                'uri': os.path.join(os.path.dirname(self._input), filepath),
+            }
 
         if image_texture.extension == 'CLIP':
             gltf_sampler['wrapS'] = spec.CLAMP_TO_EDGE
@@ -116,8 +123,15 @@ class TextureMixin(object):
 
         gltf_image = {
             'name': os.path.basename(filepath),
-            'uri': os.path.join(path, filepath),
             'mimeType': 'image/png',
         }
+
+        # gltf_image['uri'] = os.path.join(path, filepath)
+        if self._output.endswith('.gltf'):  # external texture
+            gltf_image['uri'] = os.path.join(path, filepath)
+        else:  # embedded texture
+            gltf_image['extras'] = {
+                'uri': os.path.join(os.path.dirname(self._input), filepath),
+            }
 
         return gltf_sampler, gltf_image

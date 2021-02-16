@@ -69,3 +69,14 @@ def apply_modifiers(obj, triangulate=False, apply_scale=False):
             set_active_object(obj)
             is_activated = True
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+
+def get_parent(obj, level=1):
+    result = obj
+
+    for i in range(level):
+        if result is None:
+            return None
+        result = result.parent
+
+    return result

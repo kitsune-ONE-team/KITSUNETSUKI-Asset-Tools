@@ -21,24 +21,21 @@ from . import spec
 class VertexMixin(object):
     def make_vertex(self, obj_matrix, gltf_primitive, polygon, vertex,
                     use_smooth=False, can_merge=False):
+        # CO
+        co = self._matrix.to_4x4() @ vertex.co @ self._matrix_inv.to_4x4()
+
         if can_merge:
-            co = obj_matrix @ vertex.co
-        else:
-            co = vertex.co
+            co = obj_matrix @ co
 
         self._buffer.write(
             gltf_primitive['attributes']['POSITION'], *tuple(co))
 
-        if use_smooth:
-            if can_merge:
-                normal = obj_matrix.to_euler().to_matrix() @ vertex.normal
-            else:
-                normal = vertex.normal
-        else:
-            if can_merge:
-                normal = obj_matrix.to_euler().to_matrix() @ polygon.normal
-            else:
-                normal = polygon.normal
+        # normals
+        normal = vertex.normal if use_smooth else polygon.normal
+        normal = self._matrix.to_4x4() @ normal @ self._matrix_inv.to_4x4()
+
+        if can_merge:
+            normal = obj_matrix.to_euler().to_matrix() @ normal
 
         self._buffer.write(
             gltf_primitive['attributes']['NORMAL'], *tuple(normal))
@@ -49,7 +46,7 @@ class VertexMixin(object):
             channel = self._buffer.add_channel({
                 'componentType': spec.TYPE_FLOAT,
                 'type': 'VEC2',
-                'extra': {
+                'extras': {
                     'reference': texcoord,
                 },
             })
@@ -59,20 +56,22 @@ class VertexMixin(object):
             gltf_primitive['attributes'][texcoord], u, 1 - v)
 
     def _write_tbs(self, obj_matrix, gltf_primitive, t, b, s, can_merge=False):
+        xt = self._matrix.to_4x4() @ t @ self._matrix_inv.to_4x4()
+
         if 'TANGENT' not in gltf_primitive['attributes']:
             channel = self._buffer.add_channel({
                 'componentType': spec.TYPE_FLOAT,
                 'type': 'VEC4',
-                'extra': {
+                'extras': {
                     'reference': 'TANGENT',
                 },
             })
             gltf_primitive['attributes']['TANGENT'] = channel['bufferView']
 
         if can_merge:
-            x, y, z = obj_matrix @ t
+            x, y, z = obj_matrix @ xt
         else:
-            x, y, z = t
+            x, y, z = xt
 
         self._buffer.write(
             gltf_primitive['attributes']['TANGENT'], x, y, z, s)
@@ -87,10 +86,15 @@ class VertexMixin(object):
                     ctype = spec.TYPE_UNSIGNED_SHORT
                 else:
                     ctype = spec.TYPE_UNSIGNED_BYTE
+
+                # unity glTF importer compatibility
+                if self._output.endswith('.vrm'):
+                    ctype = spec.TYPE_UNSIGNED_SHORT
+
                 channel = self._buffer.add_channel({
                     'componentType': ctype,
                     'type': 'VEC4',
-                    'extra': {
+                    'extras': {
                         'reference': joints,
                     },
                 })
@@ -107,7 +111,7 @@ class VertexMixin(object):
                 channel = self._buffer.add_channel({
                     'componentType': spec.TYPE_FLOAT,
                     'type': 'VEC4',
-                    'extra': {
+                    'extras': {
                         'reference': weights,
                     },
                 })

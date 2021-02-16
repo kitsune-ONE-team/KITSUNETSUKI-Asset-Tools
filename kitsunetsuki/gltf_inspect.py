@@ -16,6 +16,7 @@
 
 import argparse
 import json
+import struct
 
 
 def parse_args():
@@ -108,14 +109,36 @@ def print_anim(gltf_data, gltf_anim):
 
 def main():
     args = parse_args()
+    gltf_data = {
+        'scene': {},
+    }
 
-    with open(args.input, 'r') as f:
-        gltf_data = json.load(f)
+    if args.input.endswith('.glb') or args.input.endswith('.vrm'):
+        with open(args.input, 'rb') as f:
+            assert f.read(4) == b'glTF'  # header
+            assert struct.unpack('<I', f.read(4))[0] == 2  # version
+            full_size = struct.unpack('<I', f.read(4))
 
-        print_scene(gltf_data, gltf_data['scene'])
+            chunk_type = None
+            chunk_data = None
+            while True:
+                chunk_size = struct.unpack('<I', f.read(4))[0]
+                chunk_type = f.read(4)
+                chunk_data = f.read(chunk_size)
+                if chunk_type == b'JSON':
+                    break
 
-        for gltf_anim in (gltf_data.get('animations') or []):
-            print_anim(gltf_data, gltf_anim)
+            if chunk_type == b'JSON':
+                gltf_data = json.loads(chunk_data)
+
+    else:
+        with open(args.input, 'r') as f:
+            gltf_data = json.load(f)
+
+    print_scene(gltf_data, gltf_data['scene'])
+
+    for gltf_anim in (gltf_data.get('animations') or []):
+        print_anim(gltf_data, gltf_anim)
 
 
 if __name__ == '__main__':

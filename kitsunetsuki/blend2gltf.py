@@ -58,6 +58,9 @@ def parse_args():
         '-k', '--keep', action='store_true',
         help='Keep the original objects and meshes before merging.')
     parser.add_argument(
+        '-z', '--z-up', action='store_true',
+        help="Skip conversion and keep Blender's Z-Up world.")
+    parser.add_argument(
         '-nuv', '--no-extra-uv', action='store_true',
         help="Don't export extra non-primary UV.")
     parser.add_argument(
@@ -92,22 +95,24 @@ def main():
 
         else:
             with open(args.output, 'wb') as f:
-                chunk1 = buf.export(out)
-                chunk0 = json.dumps(out, indent=4).encode()
+                chunk1 = buf.export(out)  # export buffer first because it updates gltf data
+                chunk0 = json.dumps(out, indent=4).encode()  # export gltf data
 
+                # write global headers
                 f.write(b'glTF')  # header
                 f.write(struct.pack('<I', 2))  # version
-
                 size = (
-                    4 + 4 + 4 +
-                    4 + 4 + len(chunk0) +
-                    4 + 4 + len(chunk1))
+                    4 + 4 + 4 +  # global headers
+                    4 + 4 + len(chunk0) +  # chunk0 + headers
+                    4 + 4 + len(chunk1))  # chunk1 + headers
                 f.write(struct.pack('<I', size))  # full size
 
+                # write chunk0 with headers
                 f.write(struct.pack('<I', len(chunk0)))
                 f.write(b'JSON')
                 f.write(chunk0)
 
+                # write chunk1 with headers
                 f.write(struct.pack('<I', len(chunk1)))
                 f.write(b'BIN\0')
                 f.write(chunk1)

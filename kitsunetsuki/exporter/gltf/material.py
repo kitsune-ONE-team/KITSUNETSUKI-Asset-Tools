@@ -29,6 +29,7 @@ class MaterialMixin(object):
     def make_material(self, material):
         gltf_material = {
             'name': material.name,
+            'doubleSided': False,
             'pbrMetallicRoughness': {
                 'extras': {},
             },

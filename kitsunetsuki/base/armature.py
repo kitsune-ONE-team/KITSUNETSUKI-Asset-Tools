@@ -20,3 +20,11 @@ def get_armature(obj):
         if parent.type == 'ARMATURE':
             return parent
         parent = parent.parent
+
+
+def is_left_bone(bone):
+    return (
+        bone.name.endswith('_L') or
+        bone.name.endswith('.L') or
+        '.L.' in bone.name or
+        '_L.' in bone.name)

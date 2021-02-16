@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import bpy
 import math
 
 from kitsunetsuki.base.armature import get_armature
@@ -35,14 +36,20 @@ class GeomMixin(object):
 
         return results
 
-    def _make_primitive(self):
+    def _make_primitive(self, mesh):
         gltf_primitive = {
             'attributes': {},
             'material': 0,
+            'targets': [],
+            'mode': 4,
             'extras': {
                 'highest_index': -1,
             },
         }
+
+        if mesh.shape_keys:
+            # gltf_primitive['extras']['targetNames'] = list(sorted(mesh.shape_keys.key_blocks.keys()))
+            gltf_primitive['extras']['targetNames'] = []
 
         channel = self._buffer.add_channel({
             # 'componentType': spec.TYPE_UNSIGNED_SHORT,
@@ -87,6 +94,15 @@ class GeomMixin(object):
             apply_modifiers(obj, triangulate=triangulate)
         mesh = obj2mesh(obj, triangulate=triangulate)
 
+        if mesh.shape_keys:
+            # gltf_mesh['extras']['targetNames'] = list(sorted(mesh.shape_keys.key_blocks.keys()))
+            gltf_mesh['extras']['targetNames'] = []
+
+        # obj.select_set(state=True)
+        # bpy.context.view_layer.objects.active = obj
+        # bpy.context.object.show_only_shape_key = True
+        # bpy.context.object.active_shape_key_index = 0
+
         # get or create materials and textures
         gltf_materials = {}
         if not self._no_materials and not is_collision(obj):
@@ -99,6 +115,13 @@ class GeomMixin(object):
                 else:  # new material
                     gltf_material = self.make_material(material)
                     self._root['materials'].append(gltf_material)
+
+                    if self._output.endswith('.vrm'):
+                        from .vrm import make_vrm_material
+
+                        vrm_material = make_vrm_material(material)
+                        self._root['extensions']['VRM']['materialProperties'].append(vrm_material)
+
                     gltf_materials[material.name] = len(self._root['materials']) - 1
 
                 # textures
@@ -123,9 +146,22 @@ class GeomMixin(object):
                         matid = gltf_materials[material.name]
                         if type(type_) == tuple and len(type_) == 2:
                             type_l1, type_l2 = type_
-                            self._root['materials'][matid][type_l1][type_l2] = {'index': texid}
+                            self._root['materials'][matid][type_l1][type_l2] = {
+                                'index': texid,
+                                'texCoord': 0,
+                            }
+                            if self._output.endswith('.vrm'):
+                                vrm_type = {
+                                    'pbrMetallicRoughness/baseColorTexture': '_MainTex',
+                                }.get('/'.join((type_l1, type_l2)))
+                                if vrm_type:
+                                    self._root['extensions']['VRM']['materialProperties'][matid]['textureProperties'][vrm_type] = texid
+
                         else:
-                            self._root['materials'][matid][type_] = {'index': texid}
+                            self._root['materials'][matid][type_] = {
+                                'index': texid,
+                                'texCoord': 0,
+                            }
 
         # get primitives
         gltf_primitives = {}
@@ -174,7 +210,7 @@ class GeomMixin(object):
 
         sharp_vertices = self.get_sharp_vertices(mesh)
         uv_tb = self.get_tangent_bitangent(mesh)
-        obj_matrix = self._matrix @ get_object_matrix(obj, armature)
+        obj_matrix = get_object_matrix(obj, armature=armature)
 
         for polygon in mesh.polygons:
             # <-- polygon
@@ -191,7 +227,7 @@ class GeomMixin(object):
             if mname in gltf_primitives:
                 gltf_primitive = gltf_primitives[mname]
             else:
-                gltf_primitive = self._make_primitive()
+                gltf_primitive = self._make_primitive(mesh)
                 gltf_primitives[mname] = gltf_primitive
                 gltf_primitive_indices[mname] = -1
                 gltf_mesh['primitives'].append(gltf_primitive)

@@ -61,6 +61,9 @@ def parse_args():
         '-z', '--z-up', action='store_true',
         help="Skip conversion and keep Blender's Z-Up world.")
     parser.add_argument(
+        '-pf', '--pose-freeze', action='store_true',
+        help="Freezes pose, resets bone's rotation.")
+    parser.add_argument(
         '-nuv', '--no-extra-uv', action='store_true',
         help="Don't export extra non-primary UV.")
     parser.add_argument(

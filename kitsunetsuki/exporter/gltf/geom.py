@@ -120,6 +120,12 @@ class GeomMixin(object):
                         from .vrm import make_vrm_material
 
                         vrm_material = make_vrm_material(material)
+                        if gltf_material['alphaMode'] == 'OPAQUE':
+                            vrm_material['tagMap']['RenderType'] = 'Opaque'
+                            vrm_material['shader'] = 'VRM/MToon'
+                        else:
+                            vrm_material['shader'] = 'VRM/UnlitCutout'
+
                         self._root['extensions']['VRM']['materialProperties'].append(vrm_material)
 
                     gltf_materials[material.name] = len(self._root['materials']) - 1
@@ -210,7 +216,10 @@ class GeomMixin(object):
 
         sharp_vertices = self.get_sharp_vertices(mesh)
         uv_tb = self.get_tangent_bitangent(mesh)
-        obj_matrix = get_object_matrix(obj, armature=armature)
+        obj_matrix = (
+            self._matrix.to_4x4() @
+            get_object_matrix(obj, armature=armature) @
+            self._matrix_inv.to_4x4())
 
         for polygon in mesh.polygons:
             # <-- polygon
@@ -301,7 +310,7 @@ class GeomMixin(object):
                         if uv_name in uv_tb and uv_layer.active:
                             self._write_tbs(
                                 obj_matrix, gltf_primitive,
-                                *uv_tb[uv_name][loop_id])
+                                *uv_tb[uv_name][loop_id], can_merge=can_merge_vertices)
                         # vertex uv -->
 
                 # generate new ID, add vertex and save last ID

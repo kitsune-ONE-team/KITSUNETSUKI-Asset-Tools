@@ -29,11 +29,19 @@ class MaterialMixin(object):
     def make_material(self, material):
         gltf_material = {
             'name': material.name,
-            'doubleSided': False,
+            'alphaMode': 'OPAQUE',
+            'alphaCutoff': material.alpha_threshold,
+            'doubleSided': not material.use_backface_culling,
             'pbrMetallicRoughness': {
                 'extras': {},
             },
         }
+
+        gltf_material['alphaMode'] = {
+            'OPAQUE': 'OPAQUE',
+            'BLEND': 'BLEND',
+            'CLIP': 'MASK'
+        }.get(material.blend_method, 'OPAQUE')
 
         shader = None
         if material.node_tree is not None:
@@ -96,11 +104,11 @@ class MaterialMixin(object):
             })
 
             gltf_material['emissiveFactor'] = tuple(emission)
-            if alpha < 1:
-                gltf_material['alphaMode'] = 'BLEND'
-                gltf_material['alphaCutoff'] = alpha
-            else:
-                gltf_material['alphaMode'] = 'OPAQUE'
-                gltf_material['alphaCutoff'] = 0
+            # if alpha < 1:
+            #     gltf_material['alphaMode'] = 'BLEND'
+            #     gltf_material['alphaCutoff'] = alpha
+            # else:
+            #     gltf_material['alphaMode'] = 'OPAQUE'
+            #     gltf_material['alphaCutoff'] = 0
 
         return gltf_material

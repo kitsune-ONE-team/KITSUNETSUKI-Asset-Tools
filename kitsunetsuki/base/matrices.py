@@ -52,11 +52,4 @@ def get_object_matrix(obj, armature=None):
 
 
 def get_inverse_bind_matrix(bone, armature):
-    if bone.parent:
-        return (
-            bone.matrix_local.inverted() @
-            armature.matrix_world.inverted())
-    else:  # root bone
-        return (
-            bone.matrix_local.inverted() @
-            armature.matrix_world.inverted())
+    return bone.matrix_local.inverted() @ armature.matrix_world.inverted()

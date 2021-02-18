@@ -17,8 +17,10 @@ import bpy
 import json
 import math
 import mathutils  # make sure to "import bpy" before
+import os
 
 from kitsunetsuki.base.armature import get_armature
+from kitsunetsuki.base.context import Mode
 from kitsunetsuki.base.collections import get_object_collection
 from kitsunetsuki.base.matrices import (
     get_bone_matrix, get_object_matrix, get_inverse_bind_matrix,
@@ -46,35 +48,39 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         super().__init__(args)
         self._output = args.output or args.input.replace('.blend', '.gltf')
         self._z_up = args.z_up
+        self._pose_freeze = args.pose_freeze
 
-        self._matrix = mathutils.Matrix((
-            (1.0, 0.0, 0.0),
-            (0.0, 1.0, 0.0),
-            (0.0, 0.0, 1.0),
-        ))
-        self._matrix_inv = self._matrix
+        if self._z_up:
+            self._matrix = mathutils.Matrix((
+                (1.0, 0.0, 0.0),
+                (0.0, 1.0, 0.0),
+                (0.0, 0.0, 1.0),
+            ))
+            self._matrix_inv = self._matrix
+        else:
+            # Mat3.convert_mat(CS_yup_right, CS_zup_right)
+            self._matrix = mathutils.Matrix((
+                (1.0, 0.0, 0.0),
+                (0.0, 0.0, 1.0),
+                (0.0, -1.0, 0.0),
+            ))
 
-        # if self._z_up:
-        #     self._matrix = mathutils.Matrix((
-        #         (1.0, 0.0, 0.0),
-        #         (0.0, 1.0, 0.0),
-        #         (0.0, 0.0, 1.0),
-        #     ))
-        #     self._matrix_inv = self._matrix
-        # else:
-        #     # Mat3.convert_mat(CS_yup_right, CS_zup_right)
-        #     self._matrix = mathutils.Matrix((
-        #         (1.0, 0.0, 0.0),
-        #         (0.0, 0.0, 1.0),
-        #         (0.0, -1.0, 0.0),
-        #     ))
+            # Mat3.convert_mat(CS_zup_right, CS_yup_right)
+            self._matrix_inv = mathutils.Matrix((
+                (1.0, 0.0, 0.0),
+                (0.0, 0.0, -1.0),
+                (0.0, 1.0, 0.0),
+            ))
 
-        #     # Mat3.convert_mat(CS_zup_right, CS_yup_right)
-        #     self._matrix_inv = mathutils.Matrix((
-        #         (1.0, 0.0, 0.0),
-        #         (0.0, 0.0, -1.0),
-        #         (0.0, 1.0, 0.0),
-        #     ))
+        if self._output.endswith('.vrm'):
+            self._z_up = False
+            self._pose_freeze = True
+
+    def _transform(self, x):
+        return (
+            self._matrix.to_4x4() @
+            x @
+            self._matrix_inv.to_4x4())
 
     def make_root_node(self):
         gltf_node = {
@@ -115,19 +121,38 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_node['extensionsUsed'].append('BP_zup')
 
         if self._output.endswith('.vrm'):
-            from .vrm import make_vrm_meta
+            from .vrm import make_vrm_meta, make_vrm_thumbnail
             gltf_node['extensionsUsed'].append('VRM')
             gltf_node['extensions']['VRM'] = make_vrm_meta(gltf_node)
 
-            gltf_node['scenes'][0]['nodes'].append(0)
-            gltf_node['nodes'].append({
-                'name': 'secondary',
-                'matrix': matrix_to_list(mathutils.Matrix((
-                    (1.0, 0.0, 0.0),
-                    (0.0, 1.0, 0.0),
-                    (0.0, 0.0, 1.0),
-                )).to_4x4()),
-            })
+            fps = [bpy.context.scene.render.filepath]
+            fps += [
+                fps[0].replace('/', '\\'),
+                fps[0].replace('\\', '/'),
+            ]
+            for fp in fps:
+                gltf_sampler, gltf_image = make_vrm_thumbnail(self._output, fp)
+                if gltf_sampler and gltf_image:
+                    gltf_node['samplers'].append(gltf_sampler)
+                    gltf_node['images'].append(gltf_image)
+
+                    gltf_texture = {
+                        'sampler': len(gltf_node['samplers']) - 1,
+                        'source': len(gltf_node['images']) - 1,
+                    }
+                    gltf_node['textures'].append(gltf_texture)
+                    tex_id = len(gltf_node['textures']) - 1
+                    gltf_node['extensions']['VRM']['meta']['texture'] = tex_id
+
+            # gltf_node['scenes'][0]['nodes'].append(0)
+            # gltf_node['nodes'].append({
+            #     'name': 'secondary',
+            #     'matrix': matrix_to_list(mathutils.Matrix((
+            #         (1.0, 0.0, 0.0),
+            #         (0.0, 1.0, 0.0),
+            #         (0.0, 0.0, 1.0),
+            #     )).to_4x4()),
+            # })
         else:
             # skips panda warnings
             gltf_node['materials'].append({
@@ -141,33 +166,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         node_id = len(self._root['nodes']) - 1
 
         if 'scenes' in parent_node:
-            if self._z_up:  # connect to scene
-                self._root['scenes'][0]['nodes'].append(node_id)
-
-            else:  # connect to Z-Up -> Y-Up conversion node
-                for conv_node_id, conv_node in enumerate(self._root['nodes']):
-                    if conv_node['name'] == 'CS_zup_right.CS_yup_left':
-                        break
-
-                else:  # conversion node not exists
-                    # Mat3.convert_mat(CS_zup_right, CS_yup_left)
-                    conv_matrix = mathutils.Matrix((
-                        (1.0, 0.0, 0.0),
-                        (0.0, 0.0, 1.0),
-                        (0.0, 1.0, 0.0),
-                    )).to_4x4()
-                    conv_node = {
-                        'name': 'CS_zup_right.CS_yup_left',
-                        'children': [],
-                        'matrix': matrix_to_list(conv_matrix),
-                    }
-                    self._root['nodes'].append(conv_node)
-                    conv_node_id = len(self._root['nodes']) - 1
-
-                    self._root['scenes'][0]['nodes'].append(len(self._root['nodes']) - 1)
-
-                conv_node['children'].append(node_id)
-
+            self._root['scenes'][0]['nodes'].append(node_id)
         else:
             parent_node['children'].append(node_id)
 
@@ -176,7 +175,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             return
 
         armature = get_armature(obj)
-        obj_matrix = self._matrix.to_4x4() @ get_object_matrix(obj, armature=armature) @ self._matrix_inv.to_4x4()
+        obj_matrix = self._transform(get_object_matrix(obj, armature=armature))
 
         # get custom object properties
         obj_props = get_object_properties(obj)
@@ -187,6 +186,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                     'rotation': quat_to_list(obj_matrix.to_quaternion()),
                     'scale': list(obj_matrix.to_scale()),
                     'translation': list(obj_matrix.to_translation()),
+                    # 'matrix': matrix_to_list(obj_matrix),
                 })
             else:
                 x, y, z = list(obj_matrix.to_translation())
@@ -285,21 +285,46 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         }
         self._root['skins'].append(gltf_skin)
 
+        if self._pose_freeze:
+            set_active_object(armature)
+
+            # disconnect bones
+            with Mode('EDIT'):
+                for bone_name, bone in armature.data.edit_bones.items():
+                    bone.use_connect = False
+
+            # reset bones rotation
+            with Mode('EDIT'):
+                for bone_name, bone in armature.data.edit_bones.items():
+                    bone.roll = 0
+                    bone.length = 10
+
+                    # pos_matrix = mathutils.Matrix.Translation(bone.matrix.to_translation())
+                    # rot_matrix = bone.matrix.to_quaternion().to_matrix()
+                    # bone.transform(pos_matrix.inverted())  # reset origin
+                    # bone.transform(rot_matrix.inverted())  # reset rotation
+                    # bone.transform(pos_matrix)  # restore origin
+
+                    bone.tail = bone.head + mathutils.Vector((0, 0, bone.length))
+                    bone.roll = 0
+
         # create joint nodes
         gltf_joints = {}
-        for bone_name, bone in armature.pose.bones.items():
-            bone_matrix = self._matrix.to_4x4() @ get_bone_matrix(bone, armature) @ self._matrix_inv.to_4x4()
+        for bone_name, bone in armature.data.bones.items():
+            bone_matrix = self._transform(get_bone_matrix(bone, armature))
             gltf_joint = {
                 'name': bone_name,
                 'children': [],
                 'rotation': quat_to_list(bone_matrix.to_quaternion()),
                 'scale': list(bone_matrix.to_scale()),
                 'translation': list(bone_matrix.to_translation()),
+                # 'matrix': matrix_to_list(bone_matrix),
             }
             gltf_joints[bone_name] = gltf_joint
 
         # add joints to skin
-        for bone_name in sorted(gltf_joints.keys()):
+        vrm_bones = set()
+        for bone_name in reversed(sorted(gltf_joints.keys())):
             bone = armature.data.bones[bone_name]
             if bone.parent:  # attach joint to parent joint
                 self._add_child(gltf_joints[bone.parent.name], gltf_joints[bone.name])
@@ -313,12 +338,15 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 vrm_bone = make_vrm_bone(
                     gltf_node_id=len(self._root['nodes']) - 1, bone=bone)
 
-                if vrm_bone['bone']:
+                if vrm_bone['bone'] and vrm_bone['bone'] not in vrm_bones:
+                    vrm_bones.add(vrm_bone['bone'])
+
                     self._root['extensions']['VRM']['humanoid']['humanBones'].append(vrm_bone)
                     fp = self._root['extensions']['VRM']['firstPerson']
 
                     if vrm_bone['bone'] == 'head':
                         fp['firstPersonBone'] = len(self._root['nodes']) - 1
+                        fp['extras'] = {'name': bone.name}
 
                     elif vrm_bone['bone'] == 'leftEye':
                         look_at = {
@@ -331,7 +359,10 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                         fp['lookAtVerticalDown'] = look_at
                         fp['lookAtVerticalUp'] = look_at
 
-            ib_matrix = self._matrix.to_4x4() @ get_inverse_bind_matrix(bone, armature) @ self._matrix_inv.to_4x4()
+            ib_matrix = self._transform(get_inverse_bind_matrix(bone, armature))
+            if self._pose_freeze:
+                ib_matrix = mathutils.Matrix.Translation(ib_matrix.to_translation()).to_4x4()
+
             self._buffer.write(
                 gltf_skin['inverseBindMatrices'],
                 *matrix_to_list(ib_matrix))

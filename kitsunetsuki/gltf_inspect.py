@@ -66,6 +66,12 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None):
 
         extra += ' {' + ', '.join(['{}: {}'.format(*i) for i in refs]) + '}'
 
+    if 'VRM' in gltf_data['extensions']:
+        vrm_bones = gltf_data['extensions']['VRM']['humanoid']['humanBones']
+        for vrm_bone in vrm_bones:
+            if node_id == vrm_bone['node']:
+                extra += ' {VRM: %s}' % vrm_bone['bone']
+
     for child_node_id in gltf_node.get('children', []):
         child_gltf_node = gltf_data['nodes'][child_node_id]
         if 'skin' in child_gltf_node:

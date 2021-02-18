@@ -13,30 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-def get_armature(obj):
-    parent = obj.parent
-    while parent:
-        if parent.type == 'ARMATURE':
-            return parent
-        parent = parent.parent
+import bpy
 
 
-def is_left_bone(bone):
-    return (
-        bone.name.endswith('_L') or
-        bone.name.endswith('.L') or
-        bone.name.lower().startswith('left') or
-        '.L.' in bone.name or
-        '_L.' in bone.name)
+class Mode(object):
+    def __init__(self, mode):
+        self._mode = mode
 
+    def __enter__(self):
+        bpy.ops.object.mode_set(mode=self._mode)
 
-def is_bone_matches(bone, names):
-    if bone.name.lower().endswith('_end'):
-        return False
-
-    for name in names:
-        if name in bone.name.lower():
-            return True
-
-    return False
+    def __exit__(self, *args, **kw):
+        bpy.ops.object.mode_set(mode='OBJECT')

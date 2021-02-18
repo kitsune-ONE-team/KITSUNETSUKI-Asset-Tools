@@ -22,19 +22,16 @@ class VertexMixin(object):
     def make_vertex(self, obj_matrix, gltf_primitive, polygon, vertex,
                     use_smooth=False, can_merge=False):
         # CO
-        co = self._matrix.to_4x4() @ vertex.co @ self._matrix_inv.to_4x4()
-
-        if can_merge:
+        co = self._transform(vertex.co)
+        if can_merge and not self._pose_freeze:
             co = obj_matrix @ co
 
         self._buffer.write(
             gltf_primitive['attributes']['POSITION'], *tuple(co))
 
         # normals
-        normal = vertex.normal if use_smooth else polygon.normal
-        normal = self._matrix.to_4x4() @ normal @ self._matrix_inv.to_4x4()
-
-        if can_merge:
+        normal = self._transform(vertex.normal if use_smooth else polygon.normal)
+        if can_merge and not self._pose_freeze:
             normal = obj_matrix.to_euler().to_matrix() @ normal
 
         self._buffer.write(
@@ -56,7 +53,10 @@ class VertexMixin(object):
             gltf_primitive['attributes'][texcoord], u, 1 - v)
 
     def _write_tbs(self, obj_matrix, gltf_primitive, t, b, s, can_merge=False):
-        xt = self._matrix.to_4x4() @ t @ self._matrix_inv.to_4x4()
+        t = self._transform(t)
+        if can_merge and not self._pose_freeze:
+            t = obj_matrix @ t
+        x, y, z = t
 
         if 'TANGENT' not in gltf_primitive['attributes']:
             channel = self._buffer.add_channel({
@@ -67,11 +67,6 @@ class VertexMixin(object):
                 },
             })
             gltf_primitive['attributes']['TANGENT'] = channel['bufferView']
-
-        if can_merge:
-            x, y, z = obj_matrix @ xt
-        else:
-            x, y, z = xt
 
         self._buffer.write(
             gltf_primitive['attributes']['TANGENT'], x, y, z, s)

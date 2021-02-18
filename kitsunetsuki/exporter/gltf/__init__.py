@@ -77,10 +77,20 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             self._pose_freeze = True
 
     def _transform(self, x):
+        """
+        Transform matrix/vector using axis conversion matrices.
+        """
         return (
             self._matrix.to_4x4() @
             x @
             self._matrix_inv.to_4x4())
+
+    def _freeze(self, matrix):
+        """
+        Freezes matrix. Removes rotation and scale.
+        """
+        pos = matrix.to_translation()
+        return mathutils.Matrix.Translation(pos).to_4x4()
 
     def make_root_node(self):
         gltf_node = {
@@ -305,13 +315,16 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                     # bone.transform(rot_matrix.inverted())  # reset rotation
                     # bone.transform(pos_matrix)  # restore origin
 
-                    bone.tail = bone.head + mathutils.Vector((0, 0, bone.length))
+                    bone.tail = bone.head + mathutils.Vector((0, bone.length, 0))
                     bone.roll = 0
 
         # create joint nodes
         gltf_joints = {}
         for bone_name, bone in armature.data.bones.items():
             bone_matrix = self._transform(get_bone_matrix(bone, armature))
+            if self._pose_freeze:
+                bone_matrix = self._freeze(bone_matrix)
+
             gltf_joint = {
                 'name': bone_name,
                 'children': [],
@@ -361,7 +374,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
             ib_matrix = self._transform(get_inverse_bind_matrix(bone, armature))
             if self._pose_freeze:
-                ib_matrix = mathutils.Matrix.Translation(ib_matrix.to_translation()).to_4x4()
+                ib_matrix = self._freeze(ib_matrix)
 
             self._buffer.write(
                 gltf_skin['inverseBindMatrices'],

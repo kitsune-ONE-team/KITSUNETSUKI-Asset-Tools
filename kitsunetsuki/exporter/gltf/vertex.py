@@ -22,7 +22,7 @@ class VertexMixin(object):
     def make_vertex(self, obj_matrix, gltf_primitive, polygon, vertex,
                     use_smooth=False, can_merge=False):
         # CO
-        co = self._transform(vertex.co)
+        co = self._matrix @ vertex.co
         if can_merge and not self._pose_freeze:
             co = obj_matrix @ co
 
@@ -30,7 +30,7 @@ class VertexMixin(object):
             gltf_primitive['attributes']['POSITION'], *tuple(co))
 
         # normals
-        normal = self._transform(vertex.normal if use_smooth else polygon.normal)
+        normal = self._matrix @ (vertex.normal if use_smooth else polygon.normal)
         if can_merge and not self._pose_freeze:
             normal = obj_matrix.to_euler().to_matrix() @ normal
 
@@ -53,7 +53,7 @@ class VertexMixin(object):
             gltf_primitive['attributes'][texcoord], u, 1 - v)
 
     def _write_tbs(self, obj_matrix, gltf_primitive, t, b, s, can_merge=False):
-        t = self._transform(t)
+        t = self._matrix @ t
         if can_merge and not self._pose_freeze:
             t = obj_matrix @ t
         x, y, z = t

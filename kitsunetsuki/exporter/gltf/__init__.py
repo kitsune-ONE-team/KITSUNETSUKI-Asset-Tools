@@ -131,28 +131,45 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_node['extensionsUsed'].append('BP_zup')
 
         if self._output.endswith('.vrm'):
-            from .vrm import make_vrm_meta, make_vrm_thumbnail
+            from .vrm import make_vrm_meta
             gltf_node['extensionsUsed'].append('VRM')
             gltf_node['extensions']['VRM'] = make_vrm_meta(gltf_node)
 
-            fps = [bpy.context.scene.render.filepath]
-            fps += [
-                fps[0].replace('/', '\\'),
-                fps[0].replace('\\', '/'),
-            ]
-            for fp in fps:
-                gltf_sampler, gltf_image = make_vrm_thumbnail(self._output, fp)
-                if gltf_sampler and gltf_image:
-                    gltf_node['samplers'].append(gltf_sampler)
-                    gltf_node['images'].append(gltf_image)
+            # make thumbnail
+            files = []
+            prefix = os.path.basename(self._input).replace('.blend', '.png')
+            inpdir = os.path.dirname(os.path.abspath(self._input))
+            if os.path.exists(inpdir) and os.path.isdir(inpdir):
+                files = reversed(sorted(os.listdir(inpdir)))
+            for filename in files:
+                if not filename.startswith(prefix):
+                    continue
 
-                    gltf_texture = {
-                        'sampler': len(gltf_node['samplers']) - 1,
-                        'source': len(gltf_node['images']) - 1,
+                gltf_sampler = {
+                    'name': filename,
+                    'wrapS': spec.CLAMP_TO_EDGE,
+                    'wrapT': spec.CLAMP_TO_EDGE,
+                }
+                gltf_node['samplers'].append(gltf_sampler)
+
+                gltf_image = {
+                    'name': filename,
+                    'mimeType': 'image/png',
+                    'extras': {
+                        'uri': os.path.join(inpdir, filename),
                     }
-                    gltf_node['textures'].append(gltf_texture)
-                    tex_id = len(gltf_node['textures']) - 1
-                    gltf_node['extensions']['VRM']['meta']['texture'] = tex_id
+                }
+                gltf_node['images'].append(gltf_image)
+
+                gltf_texture = {
+                    'sampler': len(gltf_node['samplers']) - 1,
+                    'source': len(gltf_node['images']) - 1,
+                }
+                gltf_node['textures'].append(gltf_texture)
+                tex_id = len(gltf_node['textures']) - 1
+                gltf_node['extensions']['VRM']['meta']['texture'] = tex_id
+
+                break
 
             # gltf_node['scenes'][0]['nodes'].append(0)
             # gltf_node['nodes'].append({

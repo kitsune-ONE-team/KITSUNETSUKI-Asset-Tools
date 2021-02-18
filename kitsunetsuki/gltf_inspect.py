@@ -41,6 +41,8 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None):
         matrix += 'S'
     if 'translation' in gltf_node:
         matrix += 'T'
+    if 'matrix' in gltf_node:
+        matrix += 'M'
 
     if matrix:
         extra += ' <{}>'.format(matrix)

@@ -8,41 +8,6 @@ from kitsunetsuki.base.objects import get_parent
 from . import spec
 
 
-def make_vrm_thumbnail(output_filepath, render_filepath):
-    thumbnail = None
-
-    if render_filepath and not os.path.isdir(render_filepath):
-        dirpath = os.path.join(
-            os.path.dirname(output_filepath), os.path.dirname(render_filepath))
-        if os.path.exists(dirpath):
-            filename = os.path.basename(render_filepath)
-            prefix, _, suffix = filename.rpartition('.')
-            for filename2 in os.listdir(dirpath):
-                if (filename2.startswith(prefix) and
-                        filename2.endswith(suffix)):
-                    thumbnail = os.path.join(dirpath, filename2)
-                    break
-
-    if thumbnail:
-        gltf_sampler = {
-            'name': os.path.basename(thumbnail),
-            'wrapS': spec.CLAMP_TO_EDGE,
-            'wrapT': spec.CLAMP_TO_EDGE,
-        }
-
-        gltf_image = {
-            'name': os.path.basename(thumbnail),
-            'mimeType': 'image/png',
-            'extras': {
-                'uri': thumbnail,
-            }
-        }
-
-        return gltf_sampler, gltf_image
-
-    return None, None
-
-
 def make_vrm_meta(gltf_root):
     data = {}
     text = bpy.data.texts.get('VRM.ini')
@@ -61,13 +26,13 @@ def make_vrm_meta(gltf_root):
             'author': data['meta']['author'],
             'contactInformation': data['meta']['contactInformation'],
             'reference': data['meta']['reference'],
-            'texture': 0,
+            'texture': 0,  # thumbnail texture
             'allowedUserName': data['meta'].get('allowedUserName', 'OnlyAuthor'),
             'violentUssageName': data['meta'].get('violentUssageName', 'Disallow'),
             'sexualUssageName': data['meta'].get('sexualUssageName', 'Disallow'),
             'commercialUssageName': data['meta'].get('commercialUssageName', 'Disallow'),
             'otherPermissionUrl': data['meta'].get('otherPermissionUrl', ''),
-            'licenseName': data['meta']['licenseName'],
+            'licenseName': data['meta'].get('licenseName', 'Redistribution_Prohibited'),
             'otherLicenseUrl': data['meta'].get('otherLicenseUrl', ''),
         },
 
@@ -177,9 +142,9 @@ def make_vrm_bone(gltf_node_id, bone):
         vrm_bone['bone'] = '{}Hand'.format(side)
 
     elif any(map(is_hand, parents)):  # hand in parents -> finger
-        if 'hand' in get_parent(bone, 3).name.lower():  # 3 level deep parent
+        if is_hand(get_parent(bone, 3)):  # 3 level deep parent
             part_name = 'Distal'
-        elif 'hand' in get_parent(bone, 2).name.lower():  # 2 level deep parent
+        elif is_hand(get_parent(bone, 1)):  # 2 level deep parent
             part_name = 'Intermediate'
         else:  # 1 level deep parent - direct parent
             part_name = 'Proximal'

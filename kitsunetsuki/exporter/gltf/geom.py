@@ -13,15 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import bpy
-import math
-
 from kitsunetsuki.base.armature import get_armature
+from kitsunetsuki.base.matrices import get_object_matrix
 from kitsunetsuki.base.mesh import obj2mesh
 from kitsunetsuki.base.objects import apply_modifiers, is_collision
-from kitsunetsuki.base.matrices import (
-    get_bone_matrix, get_object_matrix, get_inverse_bind_matrix,
-    matrix_to_list, quat_to_list)
 
 from . import spec
 
@@ -127,18 +122,6 @@ class GeomMixin(object):
                     gltf_material = self.make_material(material)
                     self._root['materials'].append(gltf_material)
 
-                    if self._output.endswith('.vrm'):
-                        from .vrm import make_vrm_material
-
-                        vrm_material = make_vrm_material(material)
-                        if gltf_material['alphaMode'] == 'OPAQUE':
-                            vrm_material['tagMap']['RenderType'] = 'Opaque'
-                            vrm_material['shader'] = 'VRM/MToon'
-                        else:
-                            vrm_material['shader'] = 'VRM/UnlitCutout'
-
-                        self._root['extensions']['VRM']['materialProperties'].append(vrm_material)
-
                     gltf_materials[material.name] = len(self._root['materials']) - 1
 
                 # textures
@@ -167,13 +150,6 @@ class GeomMixin(object):
                                 'index': texid,
                                 'texCoord': 0,
                             }
-                            if self._output.endswith('.vrm'):
-                                vrm_type = {
-                                    'pbrMetallicRoughness/baseColorTexture': '_MainTex',
-                                }.get('/'.join((type_l1, type_l2)))
-                                if vrm_type:
-                                    self._root['extensions']['VRM']['materialProperties'][matid]['textureProperties'][vrm_type] = texid
-
                         else:
                             self._root['materials'][matid][type_] = {
                                 'index': texid,

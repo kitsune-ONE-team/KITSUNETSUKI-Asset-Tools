@@ -91,7 +91,7 @@ class VertexMixin(object):
                 else:
                     ctype = spec.TYPE_UNSIGNED_BYTE
 
-                # unity glTF importer compatibility
+                # Unity glTF importer (UniVRM/UniGLTF) compatibility
                 if self._output.endswith('.vrm'):
                     ctype = spec.TYPE_UNSIGNED_SHORT
 

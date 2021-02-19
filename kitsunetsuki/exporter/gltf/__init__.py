@@ -17,7 +17,6 @@ import bpy
 import json
 import math
 import mathutils  # make sure to "import bpy" before
-import os
 
 from kitsunetsuki.base.armature import get_armature
 from kitsunetsuki.base.context import Mode
@@ -47,8 +46,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
     def __init__(self, args):
         super().__init__(args)
         self._output = args.output or args.input.replace('.blend', '.gltf')
-        self._z_up = args.z_up
-        self._pose_freeze = args.pose_freeze
+        self._z_up = getattr(args, 'z_up', False)
+        self._pose_freeze = getattr(args, 'pose_freeze', False)
 
         if self._z_up:
             self._matrix = mathutils.Matrix((
@@ -71,10 +70,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 (0.0, 0.0, -1.0),
                 (0.0, 1.0, 0.0),
             ))
-
-        if self._output.endswith('.vrm'):
-            self._z_up = False
-            self._pose_freeze = True
 
     def _transform(self, x):
         """
@@ -114,7 +109,10 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
             'nodes': [],
             'meshes': [],
-            'materials': [],
+            'materials': [{
+                # skips panda warnings
+                'name': 'GLTF_DEFAULT_MATERIAL',
+            }],
             'animations': [],
             'skins': [],
 
@@ -129,62 +127,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         if self._z_up:
             gltf_node['extensionsUsed'].append('BP_zup')
-
-        if self._output.endswith('.vrm'):
-            from .vrm import make_vrm_meta
-            gltf_node['extensionsUsed'].append('VRM')
-            gltf_node['extensions']['VRM'] = make_vrm_meta(gltf_node)
-
-            # make thumbnail
-            files = []
-            prefix = os.path.basename(self._input).replace('.blend', '.png')
-            inpdir = os.path.dirname(os.path.abspath(self._input))
-            if os.path.exists(inpdir) and os.path.isdir(inpdir):
-                files = reversed(sorted(os.listdir(inpdir)))
-            for filename in files:
-                if not filename.startswith(prefix):
-                    continue
-
-                gltf_sampler = {
-                    'name': filename,
-                    'wrapS': spec.CLAMP_TO_EDGE,
-                    'wrapT': spec.CLAMP_TO_EDGE,
-                }
-                gltf_node['samplers'].append(gltf_sampler)
-
-                gltf_image = {
-                    'name': filename,
-                    'mimeType': 'image/png',
-                    'extras': {
-                        'uri': os.path.join(inpdir, filename),
-                    }
-                }
-                gltf_node['images'].append(gltf_image)
-
-                gltf_texture = {
-                    'sampler': len(gltf_node['samplers']) - 1,
-                    'source': len(gltf_node['images']) - 1,
-                }
-                gltf_node['textures'].append(gltf_texture)
-                tex_id = len(gltf_node['textures']) - 1
-                gltf_node['extensions']['VRM']['meta']['texture'] = tex_id
-
-                break
-
-            # gltf_node['scenes'][0]['nodes'].append(0)
-            # gltf_node['nodes'].append({
-            #     'name': 'secondary',
-            #     'matrix': matrix_to_list(mathutils.Matrix((
-            #         (1.0, 0.0, 0.0),
-            #         (0.0, 1.0, 0.0),
-            #         (0.0, 0.0, 1.0),
-            #     )).to_4x4()),
-            # })
-        else:
-            # skips panda warnings
-            gltf_node['materials'].append({
-                'name': 'GLTF_DEFAULT_MATERIAL',
-            })
 
         return gltf_node
 
@@ -353,7 +295,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_joints[bone_name] = gltf_joint
 
         # add joints to skin
-        vrm_bones = set()
         for bone_name in reversed(sorted(gltf_joints.keys())):
             bone = armature.data.bones[bone_name]
             if bone.parent:  # attach joint to parent joint
@@ -361,33 +302,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             else:  # attach joint to armature
                 # gltf_skin['skeleton'] = len(self._root['nodes']) - 1
                 self._add_child(gltf_armature, gltf_joints[bone.name])
-
-            if self._output.endswith('.vrm'):
-                from .vrm import make_vrm_bone
-
-                vrm_bone = make_vrm_bone(
-                    gltf_node_id=len(self._root['nodes']) - 1, bone=bone)
-
-                if vrm_bone['bone'] and vrm_bone['bone'] not in vrm_bones:
-                    vrm_bones.add(vrm_bone['bone'])
-
-                    self._root['extensions']['VRM']['humanoid']['humanBones'].append(vrm_bone)
-                    fp = self._root['extensions']['VRM']['firstPerson']
-
-                    if vrm_bone['bone'] == 'head':
-                        fp['firstPersonBone'] = len(self._root['nodes']) - 1
-                        fp['extras'] = {'name': bone.name}
-
-                    elif vrm_bone['bone'] == 'leftEye':
-                        look_at = {
-                            'curve': [0, 0, 0, 1, 1, 1, 1, 0],
-                            'xRange': 90,
-                            'yRange': 10,
-                        }
-                        fp['lookAtHorizontalInner'] = look_at
-                        fp['lookAtHorizontalOuter'] = look_at
-                        fp['lookAtVerticalDown'] = look_at
-                        fp['lookAtVerticalUp'] = look_at
 
             ib_matrix = self._transform(get_inverse_bind_matrix(bone, armature))
             if self._pose_freeze:

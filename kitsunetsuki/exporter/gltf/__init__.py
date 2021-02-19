@@ -435,7 +435,9 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_mesh = {
                 'name': name,
                 'primitives': [],
-                'extras': {},
+                'extras': {
+                    'targetNames': [],
+                },
             }
             self._root['meshes'].append(gltf_mesh)
             gltf_node['mesh'] = len(self._root['meshes']) - 1

@@ -36,20 +36,32 @@ class GeomMixin(object):
 
         return results
 
-    def _make_primitive(self, mesh):
+    def _make_primitive(self, gltf_mesh, mesh):
         gltf_primitive = {
             'attributes': {},
             'material': 0,
             'targets': [],
-            'mode': 4,
+            # 'mode': 4,
             'extras': {
                 'highest_index': -1,
+                'targetNames': gltf_mesh['extras']['targetNames'],
             },
         }
 
-        if mesh.shape_keys:
-            # gltf_primitive['extras']['targetNames'] = list(sorted(mesh.shape_keys.key_blocks.keys()))
-            gltf_primitive['extras']['targetNames'] = []
+        for sk_name in gltf_primitive['extras']['targetNames']:
+            gltf_target = {}
+
+            channel = self._buffer.add_channel({
+                'componentType': spec.TYPE_FLOAT,
+                'type': 'VEC3',
+                'extras': {
+                    'reference': 'POSITION',
+                    'target': sk_name,
+                },
+            })
+            gltf_target['POSITION'] = channel['bufferView']
+
+            gltf_primitive['targets'].append(gltf_target)
 
         channel = self._buffer.add_channel({
             # 'componentType': spec.TYPE_UNSIGNED_SHORT,
@@ -94,14 +106,13 @@ class GeomMixin(object):
             apply_modifiers(obj, triangulate=triangulate)
         mesh = obj2mesh(obj, triangulate=triangulate)
 
+        # setup shape key names for the primitives
         if mesh.shape_keys:
-            # gltf_mesh['extras']['targetNames'] = list(sorted(mesh.shape_keys.key_blocks.keys()))
-            gltf_mesh['extras']['targetNames'] = []
+            for sk_name in sorted(mesh.shape_keys.key_blocks.keys()):
+                if sk_name.lower() == 'basis':
+                    continue
 
-        # obj.select_set(state=True)
-        # bpy.context.view_layer.objects.active = obj
-        # bpy.context.object.show_only_shape_key = True
-        # bpy.context.object.active_shape_key_index = 0
+                gltf_mesh['extras']['targetNames'].append(sk_name)
 
         # get or create materials and textures
         gltf_materials = {}
@@ -236,7 +247,7 @@ class GeomMixin(object):
             if mname in gltf_primitives:
                 gltf_primitive = gltf_primitives[mname]
             else:
-                gltf_primitive = self._make_primitive(mesh)
+                gltf_primitive = self._make_primitive(gltf_mesh, mesh)
                 gltf_primitives[mname] = gltf_primitive
                 gltf_primitive_indices[mname] = -1
                 gltf_mesh['primitives'].append(gltf_primitive)
@@ -245,8 +256,6 @@ class GeomMixin(object):
             if material and not self._no_materials and not is_collision(obj):
                 if material.name in gltf_materials:
                     gltf_primitive['material'] = gltf_materials[mname]
-            # else:
-            #     gltf_primitive['material'] = 0
 
             # vertices
             for i, vertex_id in enumerate(polygon.vertices):
@@ -286,7 +295,8 @@ class GeomMixin(object):
                 elif is_collision(obj):
                     can_merge_vertices = False
                 self.make_vertex(
-                    obj_matrix, gltf_primitive, polygon, vertex,
+                    obj_matrix, gltf_primitive,
+                    mesh, polygon, vertex, vertex_id,
                     use_smooth=use_smooth, can_merge=can_merge_vertices)
 
                 # uv layers, active first

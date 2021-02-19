@@ -19,7 +19,8 @@ from . import spec
 
 
 class VertexMixin(object):
-    def make_vertex(self, obj_matrix, gltf_primitive, polygon, vertex,
+    def make_vertex(self, obj_matrix, gltf_primitive,
+                    mesh, polygon, vertex, vertex_id,
                     use_smooth=False, can_merge=False):
         # CO
         co = self._matrix @ vertex.co
@@ -36,6 +37,14 @@ class VertexMixin(object):
 
         self._buffer.write(
             gltf_primitive['attributes']['NORMAL'], *tuple(normal))
+
+        # shape keys
+        for i, sk_name in enumerate(gltf_primitive['extras']['targetNames']):
+            sk_data = mesh.shape_keys.key_blocks[sk_name]
+            co = (self._matrix @ sk_data.data[vertex_id].co) - (self._matrix @ vertex.co)
+
+            self._buffer.write(
+                gltf_primitive['targets'][i]['POSITION'], *tuple(co))
 
     def _write_uv(self, gltf_primitive, uv_id, u, v):
         texcoord = 'TEXCOORD_{}'.format(uv_id)

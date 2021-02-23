@@ -112,21 +112,27 @@ class ArmatureMixin(object):
             'stiffiness': 1,  # The resilience of the swaying object (the power of returning to the initial pose)
             'gravityPower': 0,
             'dragForce': 0,  # The resistance (deceleration) of automatic animation
-            'gravityDir': [0, -1, 0],  # x, y, z -> down
-            'center': 0,
+            'gravityDir': {
+                'x': 0,
+                'y': -1,
+                'z': 0,
+            },  # down
+            'center': -1,
             'hitRadius': 0,
             'bones': [gltf_node_id],
             'colliderGroups': [],
         }
 
-        if hasattr(bone, 'jiggle_stiffness'):
-            vrm_spring['stiffiness'] = bone.jiggle_stiffness
+        if bone.get('jiggle_stiffness', None) is not None:
+            vrm_spring['stiffiness'] = bone.get('jiggle_stiffness')
 
-        if hasattr(bone, 'jiggle_gravity'):
-            vrm_spring['gravityPower'] = bone.jiggle_gravity
+        if bone.get('jiggle_gravity', None) is not None:
+            vrm_spring['gravityPower'] = bone.get('jiggle_gravity')
 
-        if hasattr(bone, 'jiggle_amplitude'):
-            vrm_spring['dragForce'] = max(0, 1000 - bone.jiggle_amplitude)
+        if bone.get('jiggle_amplitude', None) is not None:
+            max_amp = 200
+            jiggle_amplitude = min(max_amp, bone.get('jiggle_amplitude'))
+            vrm_spring['dragForce'] = (max_amp - jiggle_amplitude) / max_amp
 
         return vrm_spring
 
@@ -170,16 +176,15 @@ class ArmatureMixin(object):
 
             # Wiggle Bones addon
             # https://blenderartists.org/t/wiggle-bones-a-jiggle-bone-implementation-for-2-8/1154726
-            if getattr(pose_bone, 'jiggle_enable', False) and pose_bone.jiggle_active:
+            if pose_bone.get('jiggle_enable', False):
                 # search for root bone
                 while (pose_bone.parent and
-                        pose_bone.parent.jiggle_enable and
-                        pose_bone.parent.jiggle_active):
+                        pose_bone.parent.get('jiggle_enable', False)):
                     pose_bone = pose_bone.parent
 
-                if bone_name not in vrm_springs:
+                if pose_bone.name not in vrm_springs:
                     vrm_spring = self._make_vrm_spring(gltf_node_id, pose_bone)
-                    vrm_springs.add(bone_name)
+                    vrm_springs.add(pose_bone.name)
                     self._root['extensions']['VRM']['secondaryAnimation']['boneGroups'].append(vrm_spring)
 
         return gltf_armature

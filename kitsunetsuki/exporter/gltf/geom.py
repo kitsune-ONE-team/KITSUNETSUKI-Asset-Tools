@@ -43,21 +43,6 @@ class GeomMixin(object):
             },
         }
 
-        for sk_name in gltf_primitive['extras']['targetNames']:
-            gltf_target = {}
-
-            channel = self._buffer.add_channel({
-                'componentType': spec.TYPE_FLOAT,
-                'type': 'VEC3',
-                'extras': {
-                    'reference': 'POSITION',
-                    'target': sk_name,
-                },
-            })
-            gltf_target['POSITION'] = channel['bufferView']
-
-            gltf_primitive['targets'].append(gltf_target)
-
         channel = self._buffer.add_channel({
             # 'componentType': spec.TYPE_UNSIGNED_SHORT,
             'componentType': spec.TYPE_UNSIGNED_INT,
@@ -68,25 +53,51 @@ class GeomMixin(object):
         })
         gltf_primitive['indices'] = channel['bufferView']
 
-        channel = self._buffer.add_channel({
-            'componentType': spec.TYPE_FLOAT,
-            'type': 'VEC3',
-            # 'max': [1] * 3,
-            # 'min': [-1] * 3,
-            'extras': {
-                'reference': 'NORMAL',
-            },
-        })
-        gltf_primitive['attributes']['NORMAL'] = channel['bufferView']
+        if gltf_mesh['primitives'] and not self._split_primitives:
+            gltf_primitive['attributes'] = gltf_mesh['primitives'][0]['attributes']
+            gltf_primitive['targets'] = gltf_mesh['primitives'][0]['targets']
 
-        channel = self._buffer.add_channel({
-            'componentType': spec.TYPE_FLOAT,
-            'type': 'VEC3',
-            'extras': {
-                'reference': 'POSITION',
-            },
-        })
-        gltf_primitive['attributes']['POSITION'] = channel['bufferView']
+        else:
+            channel = self._buffer.add_channel({
+                'componentType': spec.TYPE_FLOAT,
+                'type': 'VEC3',
+                # 'max': [1] * 3,
+                # 'min': [-1] * 3,
+                'extras': {
+                    'reference': 'NORMAL',
+                },
+            })
+            gltf_primitive['attributes']['NORMAL'] = channel['bufferView']
+
+            channel = self._buffer.add_channel({
+                'componentType': spec.TYPE_FLOAT,
+                'type': 'VEC3',
+                'extras': {
+                    'reference': 'POSITION',
+                },
+            })
+            gltf_primitive['attributes']['POSITION'] = channel['bufferView']
+
+            for sk_id, sk_name in enumerate(gltf_primitive['extras']['targetNames']):
+                gltf_target = {
+                    # '_extras': {
+                    #     'name': sk_name,
+                    # },
+                }
+
+                channel = self._buffer.add_channel({
+                    'componentType': spec.TYPE_FLOAT,
+                    'type': 'VEC3',
+                    # 'max': [1000] * 3,
+                    # 'min': [-1000] * 3,
+                    'extras': {
+                        'reference': 'POSITION',
+                        'target': sk_name,
+                    },
+                })
+                gltf_target['POSITION'] = channel['bufferView']
+
+                gltf_primitive['targets'].append(gltf_target)
 
         return gltf_primitive
 
@@ -158,7 +169,8 @@ class GeomMixin(object):
 
         # get primitives
         gltf_primitives = {}
-        gltf_primitive_indices = {}
+        gltf_primitive_indices = {}  # splitted vertex buffers
+        gltf_mesh_vertices_index = -1  # reusable vertex buffer
         if can_merge:
             for i, gltf_primitive in enumerate(gltf_mesh['primitives']):
                 mname = None
@@ -203,10 +215,7 @@ class GeomMixin(object):
 
         sharp_vertices = self.get_sharp_vertices(mesh)
         uv_tb = self.get_tangent_bitangent(mesh)
-        obj_matrix = (
-            self._matrix.to_4x4() @
-            get_object_matrix(obj, armature=armature) @
-            self._matrix_inv.to_4x4())
+        obj_matrix = self._transform(get_object_matrix(obj, armature=armature))
 
         for polygon in mesh.polygons:
             # <-- polygon
@@ -301,15 +310,20 @@ class GeomMixin(object):
 
                 # generate new ID, add vertex and save last ID
                 gltf_primitive_indices[mname] += 1
+                gltf_mesh_vertices_index += 1
+                if self._split_primitives:
+                    idx = gltf_primitive_indices[mname]
+                else:
+                    idx = gltf_mesh_vertices_index
                 self._buffer.write(
-                    gltf_primitive['indices'], gltf_primitive_indices[mname])
+                    gltf_primitive['indices'], idx)
                 gltf_primitive['extras']['highest_index'] = gltf_primitive_indices[mname]
 
                 # save vertex data for sharing
                 if vertex_id not in gltf_vertices[mname]:
                     gltf_vertices[mname][vertex_id] = []
                 gltf_vertices[mname][vertex_id].append((
-                    gltf_primitive_indices[mname], active_uv,
+                    idx, active_uv,
                 ))
 
                 # attach joints to vertex

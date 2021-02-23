@@ -48,6 +48,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         self._output = args.output or args.input.replace('.blend', '.gltf')
         self._z_up = getattr(args, 'z_up', False)
         self._pose_freeze = getattr(args, 'pose_freeze', False)
+        self._split_primitives = getattr(args, 'split_primitives', False)
 
         if self._z_up:
             self._matrix = mathutils.Matrix((
@@ -75,10 +76,13 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         """
         Transform matrix/vector using axis conversion matrices.
         """
-        return (
-            self._matrix.to_4x4() @
-            x @
-            self._matrix_inv.to_4x4())
+        if self._z_up:
+            return x
+        else:
+            return (
+                self._matrix.to_4x4() @
+                x @
+                self._matrix_inv.to_4x4())
 
     def _freeze(self, matrix):
         """

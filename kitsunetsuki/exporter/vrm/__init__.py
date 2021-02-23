@@ -17,14 +17,12 @@ import bpy
 import configparser
 import os
 
-from kitsunetsuki.base.armature import is_left_bone, is_bone_matches
-from kitsunetsuki.base.objects import get_parent
-
 from ..gltf import GLTFExporter
 from ..gltf import spec
+from .armature import ArmatureMixin
 
 
-class VRMExporter(GLTFExporter):
+class VRMExporter(ArmatureMixin, GLTFExporter):
     def __init__(self, args):
         super().__init__(args)
 
@@ -138,130 +136,6 @@ class VRMExporter(GLTFExporter):
 
         return gltf_node
 
-    def _make_vrm_bone(self, gltf_node_id, bone):
-        vrm_bone = {
-            'bone': None,
-            'node': gltf_node_id,
-            'useDefaultValues': True,
-            'extras': {
-                'name': bone.name,
-            }
-        }
-
-        def is_hand(bone):
-            return is_bone_matches(bone, ('hand', 'wrist'))
-
-        side = 'left' if is_left_bone(bone) else 'right'
-
-        parents = []
-        for i in range(1, 3+1):
-            parent = get_parent(bone, i)
-            if parent:
-                parents.append(parent)
-
-        if is_bone_matches(bone, ('hips',)):
-            vrm_bone['bone'] = 'hips'
-
-        elif is_bone_matches(bone, ('spine',)):
-            vrm_bone['bone'] = 'spine'
-
-        elif is_bone_matches(bone, ('chest',)):
-            vrm_bone['bone'] = 'chest'
-
-        elif is_bone_matches(bone, ('neck',)):
-            vrm_bone['bone'] = 'neck'
-
-        elif is_bone_matches(bone, ('head',)):
-            vrm_bone['bone'] = 'head'
-
-        elif is_bone_matches(bone, ('eye',)):
-            vrm_bone['bone'] = '{}Eye'.format(side)
-
-        elif is_bone_matches(bone, ('lowerleg', 'calf', 'shin', 'knee')):
-            vrm_bone['bone'] = '{}LowerLeg'.format(side)
-
-        elif is_bone_matches(bone, ('upperleg', 'thigh', 'leg')):
-            vrm_bone['bone'] = '{}UpperLeg'.format(side)
-
-        elif is_bone_matches(bone, ('foot', 'ankle')):
-            vrm_bone['bone'] = '{}Foot'.format(side)
-
-        elif is_bone_matches(bone, ('toe',)):
-            vrm_bone['bone'] = '{}Toes'.format(side)
-
-        elif is_bone_matches(bone, ('shoulder', 'clavicle')):
-            vrm_bone['bone'] = '{}Shoulder'.format(side)
-
-        elif is_bone_matches(bone, ('lowerarm', 'elbow')):
-            vrm_bone['bone'] = '{}LowerArm'.format(side)
-
-        elif is_bone_matches(bone, ('upperarm', 'arm')):
-            vrm_bone['bone'] = '{}UpperArm'.format(side)
-
-        elif is_hand(bone):
-            vrm_bone['bone'] = '{}Hand'.format(side)
-
-        elif any(map(is_hand, parents)):  # hand in parents -> finger
-            if is_hand(get_parent(bone, 3)):  # 3 level deep parent
-                part_name = 'Distal'
-            elif is_hand(get_parent(bone, 1)):  # 2 level deep parent
-                part_name = 'Intermediate'
-            else:  # 1 level deep parent - direct parent
-                part_name = 'Proximal'
-
-            if is_bone_matches(bone, ('thumb',)):
-                vrm_bone['bone'] = '{}Thumb{}'.format(side, part_name)
-
-            elif is_bone_matches(bone, ('index',)):
-                vrm_bone['bone'] = '{}Index{}'.format(side, part_name)
-
-            elif is_bone_matches(bone, ('middle',)):
-                vrm_bone['bone'] = '{}Middle{}'.format(side, part_name)
-
-            elif is_bone_matches(bone, ('ring',)):
-                vrm_bone['bone'] = '{}Ring{}'.format(side, part_name)
-
-            elif is_bone_matches(bone, ('pinky', 'little')):
-                vrm_bone['bone'] = '{}Little{}'.format(side, part_name)
-
-        return vrm_bone
-
-    def make_armature(self, parent_node, armature):
-        gltf_armature = super().make_armature(parent_node, armature)
-
-        vrm_bones = set()
-        for bone_name, bone in armature.data.bones.items():
-            for gltf_node_id, gltf_node in enumerate(self._root['nodes']):
-                if gltf_node['name'] == bone_name:
-                    break
-            else:
-                continue
-
-            vrm_bone = self._make_vrm_bone(gltf_node_id=gltf_node_id, bone=bone)
-
-            if vrm_bone['bone'] and vrm_bone['bone'] not in vrm_bones:
-                vrm_bones.add(vrm_bone['bone'])
-                self._root['extensions']['VRM']['humanoid']['humanBones'].append(vrm_bone)
-
-                fp = self._root['extensions']['VRM']['firstPerson']
-
-                if vrm_bone['bone'] == 'head':
-                    fp['firstPersonBone'] = len(self._root['nodes']) - 1
-                    fp['extras'] = {'name': bone.name}
-
-                elif vrm_bone['bone'] == 'leftEye':
-                    look_at = {
-                        'curve': [0, 0, 0, 1, 1, 1, 1, 0],
-                        'xRange': 90,
-                        'yRange': 10,
-                    }
-                    fp['lookAtHorizontalInner'] = look_at
-                    fp['lookAtHorizontalOuter'] = look_at
-                    fp['lookAtVerticalDown'] = look_at
-                    fp['lookAtVerticalUp'] = look_at
-
-        return gltf_armature
-
     def _make_vrm_material(self, material):
         vrm_material = {
             'floatProperties': {
@@ -353,19 +227,22 @@ class VRMExporter(GLTFExporter):
         """
 
         vrm_name = {
-            # try to get VRM blend shapes from VRChat visemes
-            'vrc.aa': 'A',
-            'vrc.ih': 'I',
-            'vrc.ou': 'U',
-            'vrc.e': 'E',
-            'vrc.oh': 'O',
+            # try to get VRM blend shapes from VRChat
+            'vrc.v_aa': 'A',
+            'vrc.v_ih': 'I',
+            'vrc.v_ou': 'U',
+            'vrc.v_e': 'E',
+            'vrc.v_oh': 'O',
+            'vrc.blink_left': 'Blink_L',
+            'vrc.blink_right': 'Blink_R',
         }.get(name, name)
 
         vrm_blend_shape = {
             'name': vrm_name,
-            'presetName': vrm_name,
-            'binds': [],  # bind to mesh ID, shape key ID, shake key weight
-            'materialValues': [],
+            'presetName': vrm_name.lower(),
+            'isBinary': False,
+            'binds': [],  # bind to mesh ID and shape key ID with shape key weight
+            'materialValues': [],  # material values override
         }
 
         return vrm_blend_shape
@@ -384,11 +261,19 @@ class VRMExporter(GLTFExporter):
                 vrm_material['shader'] = 'VRM/UnlitCutout'
 
             if gltf_material['pbrMetallicRoughness'].get('baseColorTexture'):
-                vrm_material['textureProperties']['_MainTex'] = gltf_material['pbrMetallicRoughness']['baseColorTexture']
+                vrm_material['textureProperties']['_MainTex'] = gltf_material['pbrMetallicRoughness']['baseColorTexture']['index']
 
             root['extensions']['VRM']['materialProperties'].append(vrm_material)
 
-        vrm_blend_shapes = {}
+        vrm_blend_shapes = {
+            'Neutral': {
+                'name': 'Neutral',
+                'presetName': 'Neutral',
+                'isBinary': False,
+                'binds': [],
+                'materialValues': [],
+            }
+        }
         for gltf_mesh_id, gltf_mesh in enumerate(root['meshes']):
             vrm_annotation = {
                 'firstPersonFlag': 'Auto',
@@ -396,19 +281,24 @@ class VRMExporter(GLTFExporter):
             }
             root['extensions']['VRM']['firstPerson']['meshAnnotations'].append(vrm_annotation)
 
-            for gltf_primitive in gltf_mesh['primitives']:
+            for gltf_primitive_id, gltf_primitive in enumerate(gltf_mesh['primitives']):
                 for sk_id, sk_name in enumerate(gltf_primitive['extras']['targetNames']):
                     if sk_name in vrm_blend_shapes:
                         vrm_blend_shape = vrm_blend_shapes[sk_name]
                     else:
                         vrm_blend_shape = self._make_vrm_blend_shape(sk_name)
+                        vrm_blend_shapes[sk_name] = vrm_blend_shape
 
-                    vrm_bind = {
-                        'mesh': gltf_mesh_id,
-                        'index': sk_id,
-                        'weight': 1,
-                    }
-                    vrm_blend_shape['binds'].append(vrm_bind)
+                    for vrm_bind in vrm_blend_shape['binds']:
+                        if vrm_bind['mesh'] == gltf_mesh_id and vrm_bind['index'] == sk_id:
+                            break
+                    else:
+                        vrm_bind = {
+                            'mesh': gltf_mesh_id,
+                            'index': sk_id,
+                            'weight': 100,
+                        }
+                        vrm_blend_shape['binds'].append(vrm_bind)
 
         for vrm_blend_shape in vrm_blend_shapes.values():
             root['extensions']['VRM']['blendShapeMaster']['blendShapeGroups'].append(vrm_blend_shape)

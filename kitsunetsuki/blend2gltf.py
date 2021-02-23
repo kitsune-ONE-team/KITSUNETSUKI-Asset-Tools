@@ -78,6 +78,9 @@ def parse_args():
     parser.add_argument(
         '-sorg', '--set-origin', action='store_true',
         help="Set origin to center of bounds for collisions.")
+    parser.add_argument(
+        '-prim', '--split-primitives', action='store_true',
+        help="Split primitives into separate vertex buffers.")
 
     return parser.parse_args()
 

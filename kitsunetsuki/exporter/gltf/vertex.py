@@ -23,7 +23,9 @@ class VertexMixin(object):
                     mesh, polygon, vertex, vertex_id,
                     use_smooth=False, can_merge=False):
         # CO
-        co = self._matrix @ vertex.co
+        co = vertex.co
+        if not self._z_up:
+            co = self._matrix @ co
         if can_merge and not self._pose_freeze:
             co = obj_matrix @ co
 
@@ -31,7 +33,9 @@ class VertexMixin(object):
             gltf_primitive['attributes']['POSITION'], *tuple(co))
 
         # normals
-        normal = self._matrix @ (vertex.normal if use_smooth else polygon.normal)
+        normal = vertex.normal if use_smooth else polygon.normal
+        if not self._z_up:
+            normal = self._matrix @  normal
         if can_merge and not self._pose_freeze:
             normal = obj_matrix.to_euler().to_matrix() @ normal
 
@@ -41,10 +45,12 @@ class VertexMixin(object):
         # shape keys
         for i, sk_name in enumerate(gltf_primitive['extras']['targetNames']):
             sk_data = mesh.shape_keys.key_blocks[sk_name]
-            co = (self._matrix @ sk_data.data[vertex_id].co) - (self._matrix @ vertex.co)
+            sk_co = sk_data.data[vertex_id].co
+            if not self._z_up:
+                sk_co = self._matrix @ sk_co
 
             self._buffer.write(
-                gltf_primitive['targets'][i]['POSITION'], *tuple(co))
+                gltf_primitive['targets'][i]['POSITION'], *tuple(sk_co - co))
 
     def _write_uv(self, gltf_primitive, uv_id, u, v):
         texcoord = 'TEXCOORD_{}'.format(uv_id)
@@ -62,7 +68,8 @@ class VertexMixin(object):
             gltf_primitive['attributes'][texcoord], u, 1 - v)
 
     def _write_tbs(self, obj_matrix, gltf_primitive, t, b, s, can_merge=False):
-        t = self._matrix @ t
+        if not self._z_up:
+            t = self._matrix @ t
         if can_merge and not self._pose_freeze:
             t = obj_matrix @ t
         x, y, z = t

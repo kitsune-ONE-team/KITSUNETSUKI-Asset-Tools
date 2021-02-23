@@ -44,7 +44,7 @@ Installing into Blender Python
 ------------------------------
 
 The installation process is a little bit tricky for this one.
-It uses [Blender](https://www.blender.org/download/) Python
+It uses [Blender](https://www.blender.org/download/) Python.
 You need to install Python modules into Blender's Python and run Python scripts with Blender.
 You can't run scripts which depends on Panda3D, for example *blend2egg*.
 

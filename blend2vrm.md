@@ -10,6 +10,7 @@ Features
 * Export full VRM meta info
 * Export VRM materials and shaders
 * Export shape keys as VRM blend shapes
+* Export VRM spring bones
 * Pose freeze
 * Pack textures including the model's thumbnail
 
@@ -59,6 +60,15 @@ licenseName = Redistribution_Prohibited
 #licenseName = Other
 #otherLicenseUrl = http://example.com/
 ```
+
+
+Spring bones setup
+------------------
+
+Install [Wiggle Bones addon](https://blenderartists.org/t/wiggle-bones-a-jiggle-bone-implementation-for-2-8/1154726)
+
+Setup bone params, but keep in mind that only a root bone of the spring would be exported.
+All children bones will be reusing the same params from root bone.
 
 
 Exporting models

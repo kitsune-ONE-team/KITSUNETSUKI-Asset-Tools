@@ -55,7 +55,7 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
         self._geom_scale = args.scale or 1
 
         # scripting
-        self._script_name = args.exec
+        self._script_names = (args.exec or '').split(',')
         self._script_locals = {}
 
         # merging
@@ -164,8 +164,10 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
             self.make_node(node, child)
 
     def convert(self):
-        if self._script_name:
-            self.execute_script(self._script_name)
+        if self._script_names:
+            for script_name in self._script_names:
+                if script_name:
+                    self.execute_script(script_name)
 
         self._root = self.make_root_node()
 

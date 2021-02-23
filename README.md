@@ -14,13 +14,13 @@ Tools
 * [makecard](makecard.md) - Card maker tool for Panda3D
 
 
-Installation
-------------
+Installing with Anaconda / Miniconda
+------------------------------------
 
-**Installing into [Anaconda](https://www.anaconda.com/products/individual) / [Miniconda](https://docs.conda.io/en/latest/miniconda.html) Python**
-
-This is an easiest way to install.
-It uses [prebuilt](https://anaconda.org/kitsune.ONE/python-blender) Blender's Python module from Anaconda Cloud.
+This is a recommended and most easiest way to install.
+It uses [Anaconda](https://www.anaconda.com/products/individual) or
+[Miniconda](https://docs.conda.io/en/latest/miniconda.html) Python
+and [prebuilt](https://anaconda.org/kitsune.ONE/python-blender) Blender's Python module from Anaconda Cloud.
 You can also [build](https://github.com/kitsune-ONE-team/KITSUNETSUKI-SDK/tree/master/conda/blender) one by yourself.
 
 ```
@@ -29,7 +29,8 @@ pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
 
-**Installing into Python**
+Installing with Python using PIP
+--------------------------------
 
 This is the most difficult way to install.
 You have to find the Blender's Python module or build it by yourself.
@@ -39,11 +40,16 @@ pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```
 
 
-**Installing into [Blender](https://www.blender.org/download/) Python**
+Installing into Blender Python
+------------------------------
 
 The installation process is a little bit tricky for this one.
+It uses [Blender](https://www.blender.org/download/) Python
 You need to install Python modules into Blender's Python and run Python scripts with Blender.
 You can't run scripts which depends on Panda3D, for example *blend2egg*.
+
+
+**Installing asset tools to [Blender](https://www.blender.org/download/) Python**
 
 ```
 2.83/python/bin/python3.7m -m ensurepip

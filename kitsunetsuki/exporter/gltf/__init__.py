@@ -299,7 +299,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             gltf_joints[bone_name] = gltf_joint
 
         # add joints to skin
-        for bone_name in reversed(sorted(gltf_joints.keys())):
+        for bone_name in sorted(gltf_joints.keys()):
             bone = armature.data.bones[bone_name]
             if bone.parent:  # attach joint to parent joint
                 self._add_child(gltf_joints[bone.parent.name], gltf_joints[bone.name])

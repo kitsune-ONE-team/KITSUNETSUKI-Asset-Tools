@@ -171,7 +171,7 @@ class GeomMixin(object):
                             shared = True
                             break
 
-                        if self.can_share_vertex(mesh, loop_id, egg_vertex_uv.get_uv()):
+                        if self.can_share_vertex(mesh, vertex, loop_id, egg_vertex_uv.get_uv(), egg_vertex.get_normal()):
                             egg_polygon.add_vertex(egg_vertex)
                             shared = True
                             break

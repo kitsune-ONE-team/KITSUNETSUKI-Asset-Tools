@@ -37,5 +37,6 @@ def obj2mesh(obj, triangulate=True):
 
     # calculate the per-vertex normals, in case blender did not do that yet.
     mesh.calc_normals()
+    mesh.calc_normals_split()
 
     return mesh

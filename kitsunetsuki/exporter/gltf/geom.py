@@ -249,11 +249,13 @@ class GeomMixin(object):
                 # vertex_id is reusable id,
                 # because multiple polygons can share the same vertices
 
+                loop_id = polygon.loop_indices[i]
+
                 # <-- vertex
                 vertex = mesh.vertices[vertex_id]
                 use_smooth = (
                     polygon.use_smooth and
-                    vertex_id not in sharp_vertices and
+                    # vertex_id not in sharp_vertices and
                     not is_collision(obj))
 
                 # try to reuse shared vertices
@@ -263,9 +265,8 @@ class GeomMixin(object):
                         gltf_vertices[mname] and
                         not is_collision(obj)):
                     shared = False
-                    for gltf_vertex_index, gltf_vertex_uv in gltf_vertices[mname][vertex_id]:
-                        loop_id = polygon.loop_indices[i]
-                        if self.can_share_vertex(mesh, loop_id, gltf_vertex_uv):
+                    for gltf_vertex_index, gltf_vertex_uv, gltf_vertex_normal in gltf_vertices[mname][vertex_id]:
+                        if self.can_share_vertex(mesh, vertex, loop_id, gltf_vertex_uv, gltf_vertex_normal):
                             self._buffer.write(
                                 gltf_primitive['indices'], gltf_vertex_index)
                             shared = True
@@ -281,7 +282,7 @@ class GeomMixin(object):
                     can_merge_vertices = False
                 self.make_vertex(
                     obj_matrix, gltf_primitive,
-                    mesh, polygon, vertex, vertex_id,
+                    mesh, polygon, vertex, vertex_id, loop_id,
                     use_smooth=use_smooth, can_merge=can_merge_vertices)
 
                 # uv layers, active first
@@ -291,7 +292,6 @@ class GeomMixin(object):
                         mesh.uv_layers.items(), key=lambda x: not x[1].active)
                     for uv_id, (uv_name, uv_layer) in enumerate(uv_layers):
                         # <-- vertex uv
-                        loop_id = polygon.loop_indices[i]
                         uv_loop = uv_layer.data[loop_id]
 
                         # not active layer and extra UV disabled
@@ -324,6 +324,7 @@ class GeomMixin(object):
                     gltf_vertices[mname][vertex_id] = []
                 gltf_vertices[mname][vertex_id].append((
                     idx, active_uv,
+                    mesh.loops[loop_id].normal if use_smooth else polygon.normal,
                 ))
 
                 # attach joints to vertex

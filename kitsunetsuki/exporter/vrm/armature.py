@@ -84,7 +84,7 @@ class ArmatureMixin(object):
         elif any(map(is_hand, parents)):  # hand in parents -> finger
             if is_hand(get_parent(bone, 3)):  # 3 level deep parent
                 part_name = 'Distal'
-            elif is_hand(get_parent(bone, 1)):  # 2 level deep parent
+            elif is_hand(get_parent(bone, 2)):  # 2 level deep parent
                 part_name = 'Intermediate'
             else:  # 1 level deep parent - direct parent
                 part_name = 'Proximal'

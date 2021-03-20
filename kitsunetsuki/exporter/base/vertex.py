@@ -16,7 +16,7 @@
 import bpy
 import mathutils  # make sure to "import bpy" before
 
-from kitsunetsuki.base.vertex import uv_equals
+from kitsunetsuki.base.vertex import uv_equals, normal_equals
 
 
 class VertexMixin(object):
@@ -46,7 +46,7 @@ class VertexMixin(object):
 
         return results
 
-    def can_share_vertex(self, mesh, loop_id, uv):
+    def can_share_vertex(self, mesh, vertex, loop_id, uv, normal):
         if not mesh.uv_layers:
             return True
 
@@ -54,7 +54,8 @@ class VertexMixin(object):
             return True
 
         uv_loop = mesh.uv_layers.active.data[loop_id]
-        if uv_equals(uv_loop.uv.to_2d(), uv):
+        # if uv_equals(uv_loop.uv.to_2d(), uv) and normal_equals(vertex.normal, normal):
+        if uv_equals(uv_loop.uv.to_2d(), uv) and normal_equals(mesh.loops[loop_id].normal, normal):
             return True
 
         return False

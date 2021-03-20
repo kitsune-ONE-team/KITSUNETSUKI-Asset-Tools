@@ -20,7 +20,7 @@ from . import spec
 
 class VertexMixin(object):
     def make_vertex(self, obj_matrix, gltf_primitive,
-                    mesh, polygon, vertex, vertex_id,
+                    mesh, polygon, vertex, vertex_id, loop_id,
                     use_smooth=False, can_merge=False):
         # CO
         co = vertex.co
@@ -33,9 +33,10 @@ class VertexMixin(object):
             gltf_primitive['attributes']['POSITION'], *tuple(co))
 
         # normals
-        normal = vertex.normal if use_smooth else polygon.normal
+        # normal = vertex.normal if use_smooth else polygon.normal
+        normal = mesh.loops[loop_id].normal if use_smooth else polygon.normal
         if not self._z_up:
-            normal = self._matrix @  normal
+            normal = self._matrix @ normal
         if can_merge and not self._pose_freeze:
             normal = obj_matrix.to_euler().to_matrix() @ normal
 

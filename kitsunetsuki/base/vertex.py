@@ -25,3 +25,19 @@ def uv_equals(uv1, uv2):
         return False
 
     return True
+
+
+def normal_equals(n1, n2):
+    x1, y1, z1 = n1
+    x2, y2, z2 = n2
+
+    if abs(x1 - x2) > 0.001:
+        return False
+
+    if abs(y1 - y2) > 0.001:
+        return False
+
+    if abs(z1 - z2) > 0.001:
+        return False
+
+    return True

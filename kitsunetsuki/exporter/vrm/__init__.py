@@ -233,6 +233,7 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
             'vrc.v_ou': 'U',
             'vrc.v_e': 'E',
             'vrc.v_oh': 'O',
+            'vrc.blink': 'Blink',
             'vrc.blink_left': 'Blink_L',
             'vrc.blink_right': 'Blink_R',
         }.get(name, name)

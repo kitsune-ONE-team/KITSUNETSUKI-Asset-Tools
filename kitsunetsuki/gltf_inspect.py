@@ -115,6 +115,28 @@ def print_anim(gltf_data, gltf_anim):
     print(' [A] {}{}'.format(gltf_anim['name'], extra))
 
 
+def print_mat(gltf_data, gltf_mat):
+    tex_ids = []
+    if 'baseColorTexture' in gltf_mat.get('pbrMetallicRoughness', {}):
+        tex_ids.append(gltf_mat['pbrMetallicRoughness']['baseColorTexture']['index'])
+    if 'metallicRoughnessTexture' in gltf_mat.get('pbrMetallicRoughness', {}):
+        tex_ids.append(gltf_mat['pbrMetallicRoughness']['metallicRoughnessTexture']['index'])
+    if 'normalTexture' in gltf_mat:
+        tex_ids.append(gltf_mat['normalTexture']['index'])
+    if 'emissiveTexture' in gltf_mat:
+        tex_ids.append(gltf_mat['emissiveTexture']['index'])
+
+    print(' [M] {}'.format(gltf_mat['name']))
+    for tex_id in tex_ids:
+        print_tex(gltf_data, gltf_data['textures'][tex_id])
+
+
+def print_tex(gltf_data, gltf_tex):
+    sampler = gltf_data['samplers'][gltf_tex['sampler']]
+    source = gltf_data['images'][gltf_tex['source']]
+    print('  + [T] {}'.format(sampler['name']))
+
+
 def main():
     args = parse_args()
     gltf_data = {
@@ -147,6 +169,9 @@ def main():
 
     for gltf_anim in (gltf_data.get('animations') or []):
         print_anim(gltf_data, gltf_anim)
+
+    for gltf_mat in (gltf_data.get('materials') or []):
+        print_mat(gltf_data, gltf_mat)
 
 
 if __name__ == '__main__':

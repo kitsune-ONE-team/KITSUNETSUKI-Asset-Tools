@@ -33,6 +33,7 @@ NOT_MERGED_TYPES = (
     'Protected',
     'Dynamic',
     'Flipbook',
+    'Slider',
 )
 
 

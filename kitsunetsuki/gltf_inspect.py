@@ -24,11 +24,14 @@ def parse_args():
 
     parser.add_argument(
         'input', type=str, help='Input .gltf file path.')
+    parser.add_argument(
+        '--extras', action='store_true',
+        required=False, help="Shows node's extras.")
 
     return parser.parse_args()
 
 
-def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None):
+def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extras=None):
     gltf_node = gltf_data['nodes'][node_id]
 
     type_ = 'N'
@@ -91,18 +94,23 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None):
     print('{} [{}] {}{}'.format(
         is_, type_, gltf_node['name'], extra))
 
+    if extras:
+        for k, v in gltf_node.get('extras', {}).items():
+            print('   {}  {}: {}'.format(
+                is_, k, v))
+
     for child_node_id in gltf_node.get('children', []):
         print_node(
             gltf_data, child_node_id,
             joints=joints, indent=indent + 1, parent_node=gltf_node)
 
 
-def print_scene(gltf_data, scene_id):
+def print_scene(gltf_data, scene_id, extras=False):
     gltf_scene = gltf_data['scenes'][scene_id]
     print(' [R] {}'.format(gltf_scene['name']))
 
     for node_id in gltf_scene['nodes']:
-        print_node(gltf_data, node_id)
+        print_node(gltf_data, node_id, extras=extras)
 
 
 def print_anim(gltf_data, gltf_anim):
@@ -165,7 +173,7 @@ def main():
         with open(args.input, 'r') as f:
             gltf_data = json.load(f)
 
-    print_scene(gltf_data, gltf_data['scene'])
+    print_scene(gltf_data, gltf_data['scene'], extras=args.extras)
 
     for gltf_anim in (gltf_data.get('animations') or []):
         print_anim(gltf_data, gltf_anim)

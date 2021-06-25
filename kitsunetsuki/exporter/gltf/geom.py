@@ -365,8 +365,8 @@ class GeomMixin(object):
 
                     # group by 4 joint-weight pairs
                     joints_weights_groups = []
-                    for i in range(len(joints_weights) // 4):
-                        group = joints_weights[i * 4: i * 4 + 4]
+                    for j in range(len(joints_weights) // 4):
+                        group = joints_weights[j * 4: j * 4 + 4]
                         joints_weights_groups.append(group)
 
                     self._write_joints_weights(

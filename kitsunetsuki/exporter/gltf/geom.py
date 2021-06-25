@@ -356,12 +356,12 @@ class GeomMixin(object):
 
                     imax = -1
                     wmax = 0
-                    for i, (joint, weight) in enumerate(joints_weights):
+                    for j, (joint, weight) in enumerate(joints_weights):
                         if weight > wmax:
-                            imax = i
+                            imax = j
                             wmax = weight
-                    # if imax >= 0:
-                    #     joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
+                    if self._norm_weights and imax >= 0:
+                        joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
 
                     # group by 4 joint-weight pairs
                     joints_weights_groups = []

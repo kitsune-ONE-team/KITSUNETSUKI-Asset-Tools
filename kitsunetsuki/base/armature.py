@@ -28,10 +28,14 @@ def is_left_bone(bone):
         bone.name.endswith('.L') or
         bone.name.lower().startswith('left') or
         '.L.' in bone.name or
-        '_L.' in bone.name)
+        '_L.' in bone.name or
+        ':Left' in bone.name)
 
 
 def is_bone_matches(bone, names):
+    if bone is None:
+        return False
+
     if bone.name.lower().endswith('_end'):
         return False
 

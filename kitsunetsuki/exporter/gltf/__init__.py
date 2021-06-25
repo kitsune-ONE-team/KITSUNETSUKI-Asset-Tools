@@ -49,6 +49,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         self._z_up = getattr(args, 'z_up', False)
         self._pose_freeze = getattr(args, 'pose_freeze', False)
         self._split_primitives = getattr(args, 'split_primitives', False)
+        self._norm_weights = getattr(args, 'normalize_weights', False)
 
         if self._z_up:
             self._matrix = mathutils.Matrix((

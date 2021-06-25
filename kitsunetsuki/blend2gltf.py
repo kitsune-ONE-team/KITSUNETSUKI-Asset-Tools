@@ -81,6 +81,9 @@ def parse_args():
     parser.add_argument(
         '-prim', '--split-primitives', action='store_true',
         help="Split primitives into separate vertex buffers.")
+    parser.add_argument(
+        '-nw', '--normalize-weights', action='store_true',
+        help="Normalize vertex weights.")
 
     return parser.parse_args()
 

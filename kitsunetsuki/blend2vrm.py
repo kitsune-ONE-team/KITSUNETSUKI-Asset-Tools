@@ -72,6 +72,9 @@ def parse_args():
     parser.add_argument(
         '-sorg', '--set-origin', action='store_true',
         help="Set origin to center of bounds for collisions.")
+    parser.add_argument(
+        '-nw', '--normalize-weights', action='store_true',
+        help="Normalize vertex weights.")
 
     return parser.parse_args()
 

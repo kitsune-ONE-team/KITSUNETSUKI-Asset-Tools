@@ -38,12 +38,20 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
     extra = ''
 
     matrix = ''
-    if 'rotation' in gltf_node:
-        matrix += 'R'
-    if 'scale' in gltf_node:
-        matrix += 'S'
     if 'translation' in gltf_node:
-        matrix += 'T'
+        if sum(gltf_node['translation']) != 0:
+            matrix += 'T'
+    if 'rotation' in gltf_node:
+        if not (gltf_node['rotation'][0] == 0 and
+                gltf_node['rotation'][1] == 0 and
+                gltf_node['rotation'][2] == 0 and
+                gltf_node['rotation'][3] == 1):
+            matrix += 'R'
+    if 'scale' in gltf_node:
+        if not (gltf_node['scale'][0] == 1 and
+                gltf_node['scale'][1] == 1 and
+                gltf_node['scale'][2] == 1):
+            matrix += 'S'
     if 'matrix' in gltf_node:
         matrix += 'M'
 
@@ -60,9 +68,16 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
             skin_id = gltf_node['skin']
             gltf_skin = gltf_data['skins'][skin_id]
             v = '{} ({} joints)'.format(
-                gltf_skin['name'],
+                gltf_skin.get('name', 'SKIN #{}'.format(skin_id)),
                 len(gltf_skin['joints']))
             refs.append(('skin', v))
+
+            if 'skeleton' in gltf_skin:
+                skeleton_id = gltf_skin['skeleton']
+                gltf_skeleton = gltf_data['nodes'][skeleton_id]
+                v = '{}'.format(
+                    gltf_skeleton.get('name', 'SKELETON #{}'.format(skeleton_id)))
+                refs.append(('skeleton', v))
 
         if 'mesh' in gltf_node:
             mesh_id = gltf_node['mesh']
@@ -107,7 +122,7 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
 
 def print_scene(gltf_data, scene_id, extras=False):
     gltf_scene = gltf_data['scenes'][scene_id]
-    print(' [R] {}'.format(gltf_scene['name']))
+    print(' [R] {}'.format(gltf_scene.get('name', 'SCENE')))
 
     for node_id in gltf_scene['nodes']:
         print_node(gltf_data, node_id, extras=extras)
@@ -142,7 +157,7 @@ def print_mat(gltf_data, gltf_mat):
 def print_tex(gltf_data, gltf_tex):
     sampler = gltf_data['samplers'][gltf_tex['sampler']]
     source = gltf_data['images'][gltf_tex['source']]
-    print('  + [T] {}'.format(sampler['name']))
+    print('  + [T] {}'.format(sampler.get('name', 'SAMPLER')))
 
 
 def main():

@@ -28,6 +28,12 @@ class ArmatureMixin(object):
             }
         }
 
+        def is_hips(bone):
+            return is_bone_matches(bone, ('hips',))
+
+        def is_upper_leg(bone):
+            return is_bone_matches(bone, ('upperleg', 'upleg', 'thigh'))
+
         def is_hand(bone):
             return is_bone_matches(bone, ('hand', 'wrist'))
 
@@ -39,14 +45,19 @@ class ArmatureMixin(object):
             if parent:
                 parents.append(parent)
 
-        if is_bone_matches(bone, ('hips',)):
+        if is_hips(bone):
             vrm_bone['bone'] = 'hips'
+
+        elif (is_bone_matches(bone, ('upperchest',)) or
+                (is_bone_matches(bone, ('spine',)) and is_hips(get_parent(bone, 3)))):
+            vrm_bone['bone'] = 'upperChest'
+
+        elif (is_bone_matches(bone, ('chest',)) or
+                (is_bone_matches(bone, ('spine',)) and is_hips(get_parent(bone, 2)))):
+            vrm_bone['bone'] = 'chest'
 
         elif is_bone_matches(bone, ('spine',)):
             vrm_bone['bone'] = 'spine'
-
-        elif is_bone_matches(bone, ('chest',)):
-            vrm_bone['bone'] = 'chest'
 
         elif is_bone_matches(bone, ('neck',)):
             vrm_bone['bone'] = 'neck'
@@ -57,10 +68,11 @@ class ArmatureMixin(object):
         elif is_bone_matches(bone, ('eye',)):
             vrm_bone['bone'] = '{}Eye'.format(side)
 
-        elif is_bone_matches(bone, ('lowerleg', 'calf', 'shin', 'knee')):
+        elif (is_bone_matches(bone, ('lowerleg', 'calf', 'shin', 'knee')) or
+                is_upper_leg(get_parent(bone))):
             vrm_bone['bone'] = '{}LowerLeg'.format(side)
 
-        elif is_bone_matches(bone, ('upperleg', 'thigh', 'leg')):
+        elif is_upper_leg(bone):
             vrm_bone['bone'] = '{}UpperLeg'.format(side)
 
         elif is_bone_matches(bone, ('foot', 'ankle')):
@@ -72,14 +84,11 @@ class ArmatureMixin(object):
         elif is_bone_matches(bone, ('shoulder', 'clavicle')):
             vrm_bone['bone'] = '{}Shoulder'.format(side)
 
-        elif is_bone_matches(bone, ('lowerarm', 'elbow')):
+        elif is_bone_matches(bone, ('lowerarm', 'forearm', 'elbow')):
             vrm_bone['bone'] = '{}LowerArm'.format(side)
 
         elif is_bone_matches(bone, ('upperarm', 'arm')):
             vrm_bone['bone'] = '{}UpperArm'.format(side)
-
-        elif is_hand(bone):
-            vrm_bone['bone'] = '{}Hand'.format(side)
 
         elif any(map(is_hand, parents)):  # hand in parents -> finger
             if is_hand(get_parent(bone, 3)):  # 3 level deep parent
@@ -103,6 +112,9 @@ class ArmatureMixin(object):
 
             elif is_bone_matches(bone, ('pinky', 'little')):
                 vrm_bone['bone'] = '{}Little{}'.format(side, part_name)
+
+        elif is_hand(bone):
+            vrm_bone['bone'] = '{}Hand'.format(side)
 
         return vrm_bone
 

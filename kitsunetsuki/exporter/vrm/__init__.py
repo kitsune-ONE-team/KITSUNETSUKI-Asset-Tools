@@ -16,6 +16,10 @@
 import bpy
 import configparser
 import os
+import json
+
+from bpy_extras.io_utils import ExportHelper
+from typing import Set, cast
 
 from ..gltf import GLTFExporter
 from ..gltf import spec
@@ -126,13 +130,14 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
         gltf_node['materials'] = []
 
         # make thumbnail
-        prefix = os.path.basename(self._input).replace('.blend', '.png')
-        inpdir = os.path.dirname(os.path.abspath(self._input))
-        if os.path.exists(inpdir) and os.path.isdir(inpdir):
-            for filename in reversed(sorted(os.listdir(inpdir))):
-                if filename.startswith(prefix):
-                    self._add_vrm_thumbnail(gltf_node, os.path.join(inpdir, filename))
-                    break
+        if self._input:
+            prefix = os.path.basename(self._input).replace('.blend', '.png')
+            inpdir = os.path.dirname(os.path.abspath(self._input))
+            if os.path.exists(inpdir) and os.path.isdir(inpdir):
+                for filename in reversed(sorted(os.listdir(inpdir))):
+                    if filename.startswith(prefix):
+                        self._add_vrm_thumbnail(gltf_node, os.path.join(inpdir, filename))
+                        break
 
         return gltf_node
 
@@ -305,3 +310,59 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
             root['extensions']['VRM']['blendShapeMaster']['blendShapeGroups'].append(vrm_blend_shape)
 
         return root, buffer_
+
+
+class VRMExporterOperator(bpy.types.Operator, ExportHelper):
+    bl_idname = 'avatar.vrm'
+    bl_label = 'Export VRM'
+    bl_description = 'Export VRM'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    filename_ext = '.vrm'
+    filter_glob: bpy.props.StringProperty(default='*.vrm', options={'HIDDEN'})
+
+    def execute(self, context: bpy.types.Context):
+        if not self.filepath:
+            return {'CANCELLED'}
+
+        class Args(object):
+            input = None
+            output = self.filepath
+            export = 'all'
+            render = 'default'
+            exec = None
+            action = None
+            speed = None
+            scale = None
+            merge = None
+            keep = None
+            no_extra_uv = None
+            no_materials = None
+            no_textures = None
+            empty_textures = None
+            set_origin = None
+            normalize_weights = None
+
+
+        args = Args()
+        e = VRMExporter(args)
+        out, buf = e.convert()
+
+        e.write(out, args.output, is_binary=True)
+
+        # re-open current file
+        bpy.ops.wm.open_mainfile(filepath=bpy.data.filepath)
+
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return cast(Set[str], ExportHelper.invoke(self, context, event))
+
+    def draw(self, context):
+        pass
+
+
+def export(export_op, context):
+    export_op.layout.operator(
+        VRMExporterOperator.bl_idname,
+        text='VRM using KITSUNETSUKI Asset Tools (.vrm)')

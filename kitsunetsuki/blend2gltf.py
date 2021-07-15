@@ -18,6 +18,8 @@ import argparse
 import json
 import struct
 
+from . import bl_info
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -98,37 +100,39 @@ def main():
 
     if args.output:
         if args.output.endswith('.gltf'):
+            # write buffer into separate file
             buf.export(out, args.output.replace('.gltf', '.bin'))
-            with open(args.output, 'w') as f:
-                json.dump(out, f, indent=4)
+            # write glTF data
+            e.write(out, args.output, is_binary=False)
 
         else:
-            with open(args.output, 'wb') as f:
-                chunk1 = buf.export(out)  # export buffer first because it updates gltf data
-                chunk0 = json.dumps(out, indent=4).encode()  # export gltf data
-
-                # write global headers
-                f.write(b'glTF')  # header
-                f.write(struct.pack('<I', 2))  # version
-                size = (
-                    4 + 4 + 4 +  # global headers
-                    4 + 4 + len(chunk0) +  # chunk0 + headers
-                    4 + 4 + len(chunk1))  # chunk1 + headers
-                f.write(struct.pack('<I', size))  # full size
-
-                # write chunk0 with headers
-                f.write(struct.pack('<I', len(chunk0)))
-                f.write(b'JSON')
-                f.write(chunk0)
-
-                # write chunk1 with headers
-                f.write(struct.pack('<I', len(chunk1)))
-                f.write(b'BIN\0')
-                f.write(chunk1)
+            # write glTF data with embedded buffer
+            e.write(out, args.output, is_binary=True)
 
     else:
         buf.export(out)
         print(json.dumps(out, indent=4))
+
+
+
+def register(init_version):
+    import bpy
+
+    version = bl_info['version']
+    if init_version != version:
+        raise Exception(f"Version mismatch: {init_version} != {version}")
+
+    from kitsunetsuki.exporter.gltf import GLTFExporterOperator, export
+    bpy.utils.register_class(GLTFExporterOperator)
+    bpy.types.TOPBAR_MT_file_export.append(export)
+
+
+def unregister():
+    import bpy
+
+    from kitsunetsuki.exporter.gltf import GLTFExporterOperator, export
+    bpy.types.TOPBAR_MT_file_export.remove(export)
+    bpy.utils.unregister_class(GLTFExporterOperator)
 
 
 if __name__ == '__main__':

@@ -17,6 +17,10 @@ import bpy
 import json
 import math
 import mathutils  # make sure to "import bpy" before
+import struct
+
+from bpy_extras.io_utils import ExportHelper
+from typing import Set, cast
 
 from kitsunetsuki.base.armature import get_armature
 from kitsunetsuki.base.context import Mode
@@ -456,3 +460,96 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         self._buffer = GLTFBuffer(self._output)
         root = super().convert()
         return root, self._buffer
+
+    def write(self, root, output, is_binary=False):
+        if is_binary:
+            with open(output, 'wb') as f:  # binary mode
+                chunk1 = self._buffer.export(root)  # export buffer first because it updates gltf data
+                chunk0 = json.dumps(root, indent=4).encode()  # export gltf data
+
+                # write global headers
+                f.write(b'glTF')  # header
+                f.write(struct.pack('<I', 2))  # version
+                size = (
+                    4 + 4 + 4 +  # global headers
+                    4 + 4 + len(chunk0) +  # chunk0 + headers
+                    4 + 4 + len(chunk1))  # chunk1 + headers
+                f.write(struct.pack('<I', size))  # full size
+
+                # write chunk0 with headers
+                f.write(struct.pack('<I', len(chunk0)))
+                f.write(b'JSON')
+                f.write(chunk0)
+
+                # write chunk1 with headers
+                f.write(struct.pack('<I', len(chunk1)))
+                f.write(b'BIN\0')
+                f.write(chunk1)
+
+        else:
+            with open(output, 'w') as f:  # text mode
+                json.dump(root, f, indent=4)
+
+
+class GLTFExporterOperator(bpy.types.Operator, ExportHelper):
+    bl_idname = 'scene.gltf'
+    bl_label = 'Export glTF'
+    bl_description = 'Export glTF'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    filename_ext = '.gltf'
+    filter_glob: bpy.props.StringProperty(default='*.gltf', options={'HIDDEN'})
+
+    def execute(self, context: bpy.types.Context):
+        if not self.filepath:
+            return {'CANCELLED'}
+
+        class Args(object):
+            input = None
+            output = self.filepath
+            export = 'all'
+            render = 'default'
+            exec = None
+            action = None
+            speed = None
+            scale = None
+            merge = None
+            keep = None
+            no_extra_uv = None
+            no_materials = None
+            no_textures = None
+            empty_textures = None
+            set_origin = None
+            normalize_weights = None
+
+
+        args = Args()
+        e = GLTFExporter(args)
+        out, buf = e.convert()
+
+        if args.output.endswith('.gltf'):
+            # write buffer into separate file
+            buf.export(out, args.output.replace('.gltf', '.bin'))
+            # write glTF data
+            e.write(out, args.output, is_binary=False)
+
+        else:
+            # write glTF data with embedded buffer
+            e.write(out, args.output, is_binary=True)
+
+        # re-open current file
+        bpy.ops.wm.open_mainfile(filepath=bpy.data.filepath)
+
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return cast(Set[str], ExportHelper.invoke(self, context, event))
+
+    def draw(self, context):
+        pass
+
+
+def export(export_op, context):
+    export_op.layout.operator(
+        GLTFExporterOperator.bl_idname,
+        text='glTF using KITSUNETSUKI Asset Tools (.gltf)')

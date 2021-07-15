@@ -41,7 +41,9 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
     def __init__(self, args):
         self._input = args.input
         self._output = args.output
-        bpy.ops.wm.open_mainfile(filepath=args.input)
+
+        if self._input:
+            bpy.ops.wm.open_mainfile(filepath=self._input)
 
         # export type
         self._export_type = args.export or 'all'
@@ -70,6 +72,12 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
         self._no_textures = args.no_textures is True
         self._empty_textures = args.empty_textures
         self._set_origin = args.set_origin is True
+
+    def get_cwd(self):
+        if self._input:
+            os.path.dirname(self._input)
+        else:
+            return ''
 
     def execute_script(self, name):
         script = bpy.data.texts.get(name)

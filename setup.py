@@ -15,10 +15,12 @@
 
 from setuptools import setup
 
+from kitsunetsuki import bl_info
+
 
 setup(
     name='kitsunetsuki-asset-tools',
-    version='0.5.6',
+    version='{}.{}.{}'.format(*bl_info['version']),
     description='KITSUNETSUKI Asset Tools',
     long_description='KITSUNETSUKI Asset Tools',
     url='https://kitsune.one/',

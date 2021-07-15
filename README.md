@@ -14,8 +14,22 @@ Tools
 * [makecard](makecard.md) - Card maker tool for Panda3D
 
 
-Installing with Anaconda / Miniconda
-------------------------------------
+Installing into Blender as addon
+--------------------------------
+
+* [Download](https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools/archive/refs/heads/master.zip) repository as ZIP file
+* Open _Edit_ - _Preferences_ - _Add-ons_ in Blender
+* Click _Install_ and choose downloaded ZIP file
+* Activate **KITSUNETSUKI Asset Tools** in the add-ons list
+
+Add-on will add two new menu entries in _File_ - _Export_:
+
+* Export glTF
+* Export VRM
+
+
+Installing into Anaconda / Miniconda as tool
+--------------------------------------------
 
 This is a recommended and most easiest way to install.
 It uses [Anaconda](https://www.anaconda.com/products/individual) or
@@ -26,39 +40,4 @@ You can also [build](https://github.com/kitsune-ONE-team/KITSUNETSUKI-SDK/tree/m
 ```
 conda install -c kitsune.one python-blender
 pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
-```
-
-
-Installing with Python using PIP
---------------------------------
-
-This is the most difficult way to install.
-You have to find the Blender's Python module or build it by yourself.
-
-```
-pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
-```
-
-
-Installing into Blender Python
-------------------------------
-
-The installation process is a little bit tricky for this one.
-It uses [Blender](https://www.blender.org/download/) Python.
-You need to install Python modules into Blender's Python and run Python scripts with Blender.
-You can't run scripts which depends on Panda3D, for example *blend2egg*.
-
-
-**Installing asset tools to [Blender](https://www.blender.org/download/) Python**
-
-```
-2.83/python/bin/python3.7m -m ensurepip
-2.83/python/bin/python3.7m -m pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
-```
-
-
-**Running asset tools from [Blender](https://www.blender.org/download/) Python**
-
-```
-blender -b -P 2.83/python/lib/python3.7/site-packages/kitsunetsuki/blend2gltf.py model.blend -o model.gltf
 ```

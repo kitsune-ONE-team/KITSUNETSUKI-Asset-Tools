@@ -31,13 +31,15 @@ Add-on will add two new menu entries in _File_ - _Export_:
 Installing into Anaconda / Miniconda as tool
 --------------------------------------------
 
-This is a recommended and most easiest way to install.
-It uses [Anaconda](https://www.anaconda.com/products/individual) or
-[Miniconda](https://docs.conda.io/en/latest/miniconda.html) Python
-and [prebuilt](https://anaconda.org/kitsune.ONE/python-blender) Blender's Python module from Anaconda Cloud.
-You can also [build](https://github.com/kitsune-ONE-team/KITSUNETSUKI-SDK/tree/master/conda/blender) one by yourself.
+* Install [Anaconda](https://www.anaconda.com/products/individual) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) Python
+* Install [prebuilt](https://anaconda.org/kitsune.ONE/python-blender) Blender as Python module from Anaconda Cloud or [build](https://github.com/kitsune-ONE-team/KITSUNETSUKI-SDK/tree/master/conda/blender) one by yourself:
 
 ```
 conda install -c kitsune.one python-blender
+```
+
+* Install **KITSUNETSUKI Asset Tools**
+
+```
 pip install git+https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools.git
 ```

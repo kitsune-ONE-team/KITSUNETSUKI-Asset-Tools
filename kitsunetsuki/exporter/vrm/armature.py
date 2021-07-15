@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import math
+
 from kitsunetsuki.base.armature import is_left_bone, is_bone_matches
 from kitsunetsuki.base.objects import get_parent
 
@@ -174,15 +176,37 @@ class ArmatureMixin(object):
                     fp['extras'] = {'name': bone.name}
 
                 elif vrm_bone['bone'] == 'leftEye':
-                    look_at = {
-                        'curve': [0, 0, 0, 1, 1, 1, 1, 0],
-                        'xRange': 90,
-                        'yRange': 10,
-                    }
-                    fp['lookAtHorizontalInner'] = look_at
-                    fp['lookAtHorizontalOuter'] = look_at
-                    fp['lookAtVerticalDown'] = look_at
-                    fp['lookAtVerticalUp'] = look_at
+                    fp.update({
+                        'lookAtHorizontalOuter': {
+                            'curve': [0, 0, 0, 1, 1, 1, 1, 0],
+                            'xRange': 90,
+                            'yRange': 10,
+                        },
+                        'lookAtHorizontalInner': {
+                            'curve': [0, 0, 0, 1, 1, 1, 1, 0],
+                            'xRange': 90,
+                            'yRange': 10,
+                        },
+                        'lookAtVerticalDown': {
+                            'curve': [0, 0, 0, 1, 1, 1, 1, 0],
+                            'xRange': 90,
+                            'yRange': 10,
+                        },
+                        'lookAtVerticalUp': {
+                            'curve': [0, 0, 0, 1, 1, 1, 1, 0],
+                            'xRange': 90,
+                            'yRange': 10,
+                        },
+                    })
+
+                    pose_bone = armature.pose.bones[bone_name]
+                    for c in pose_bone.constraints:
+                        if c.type == 'LIMIT_ROTATION':
+                            fp['lookAtHorizontalOuter']['xRange'] = -math.degrees(c.min_x)
+                            fp['lookAtHorizontalInner']['xRange'] = math.degrees(c.max_x)
+                            fp['lookAtVerticalDown']['yRange'] = -math.degrees(c.min_z)
+                            fp['lookAtVerticalUp']['yRange'] = math.degrees(c.max_z)
+                            break
 
             pose_bone = armature.pose.bones[bone_name]
 

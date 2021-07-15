@@ -91,7 +91,8 @@ class GLTFBuffer(object):
             extras = gltf_image.get('extras') or {}
 
             if 'uri' in extras:
-                with open(extras['uri'], 'rb') as f:
+                tfilepath = os.path.join(os.path.dirname(self._filepath), extras['uri'])
+                with open(tfilepath, 'rb') as f:
                     part = f.read()
                     view = {
                         'buffer': len(parent_node['buffers']),

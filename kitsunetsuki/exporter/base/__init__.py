@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
+import os
 
 from kitsunetsuki.base.collections import get_object_collection
 from kitsunetsuki.base.objects import (
@@ -75,7 +76,7 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
 
     def get_cwd(self):
         if self._input:
-            os.path.dirname(self._input)
+            return os.path.dirname(self._input)
         else:
             return ''
 

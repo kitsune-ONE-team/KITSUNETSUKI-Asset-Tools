@@ -77,7 +77,7 @@ class TextureMixin(object):
             gltf_image['uri'] = os.path.join(path, filepath)
         else:  # embedded texture
             gltf_image['extras'] = {
-                'uri': os.path.join(os.path.dirname(self._input), filepath),
+                'uri': os.path.join(self.get_cwd(), filepath),
             }
 
         if image_texture.extension == 'CLIP':
@@ -131,7 +131,7 @@ class TextureMixin(object):
             gltf_image['uri'] = os.path.join(path, filepath)
         else:  # embedded texture
             gltf_image['extras'] = {
-                'uri': os.path.join(os.path.dirname(self._input), filepath),
+                'uri': os.path.join(self.get_cwd(), filepath),
             }
 
         return gltf_sampler, gltf_image

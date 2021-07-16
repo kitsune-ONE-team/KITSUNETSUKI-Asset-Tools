@@ -32,8 +32,8 @@ def parse_args():
         '-o', '--output', type=str, required=False,
         help='Output .egg file path.')
     parser.add_argument(
-        '-e', '--export', type=str, required=False, default='all',
-        help='Export type: all/animation/collision.')
+        '-e', '--export', type=str, required=False, default='scene',
+        help='Export type: scene/animation/collision/all')
     parser.add_argument(
         '-r', '--render', type=str, required=False, default='default',
         help='Render type: default/rp.')

@@ -32,6 +32,7 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
 
         self._z_up = False
         self._pose_freeze = True
+        self._export_type = 'all'
 
     def _add_vrm_thumbnail(self, gltf_node, filepath):
         gltf_sampler = {

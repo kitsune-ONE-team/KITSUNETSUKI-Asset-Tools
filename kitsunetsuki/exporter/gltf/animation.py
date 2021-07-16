@@ -45,8 +45,15 @@ class AnimationMixin(object):
         }
         return gltf_sampler
 
-    def make_action(self, node, armature):
-        gltf_armature = self.make_armature(node, armature)
+    def make_action(self, node, armature, action):
+        gltf_armature = None
+        for i, gltf_node in enumerate(self._root['nodes']):
+            if gltf_node['name'] == armature.name:
+                gltf_armature = gltf_node
+                break
+        if not gltf_armature:
+            gltf_armature = self.make_armature(node, armature)
+
         gltf_skin = None
         for i in gltf_armature['children']:
             gltf_node = self._root['nodes'][i]
@@ -56,7 +63,7 @@ class AnimationMixin(object):
 
         # <-- animation
         gltf_animation = {
-            'name': self._action or 'GLTF_ANIMATION',
+            'name': action.name if action else 'GLTF_ANIMATION',
             'channels': [],
             'samplers': [],
         }
@@ -101,10 +108,9 @@ class AnimationMixin(object):
         # set animation data
         frame_start = bpy.context.scene.frame_start
         frame_end = bpy.context.scene.frame_end
-        if self._action:
-            if self._action in bpy.data.actions:
-                action = bpy.data.actions[self._action]
-                frame_start, frame_end = action.frame_range
+        if action:
+            armature.animation_data.action = action
+            frame_start, frame_end = action.frame_range
 
         frame = float(frame_start)
         frame_int = None

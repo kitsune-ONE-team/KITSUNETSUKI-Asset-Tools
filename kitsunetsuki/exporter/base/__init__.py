@@ -47,7 +47,7 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
             bpy.ops.wm.open_mainfile(filepath=self._input)
 
         # export type
-        self._export_type = args.export or 'all'
+        self._export_type = args.export or 'scene'
         self._action = args.action  # animation/action name to export
 
         # render type
@@ -123,13 +123,16 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
 
     def make_animation(self, parent_node, obj=None):
         for child in bpy.data.objects:
-            # print(child)
             if not is_object_visible(child):
                 continue
 
             if child.type == 'ARMATURE':
-                self.make_action(parent_node, child)
-                return
+                if self._action:
+                    action = bpy.data.actions[self._action]
+                    self.make_action(parent_node, child, action)
+                else:
+                    for action_name, action in bpy.data.actions.items():
+                        self.make_action(parent_node, child, action)
 
     def make_node(self, parent_node, obj=None):
         node = None
@@ -186,5 +189,7 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
             self.make_animation(self._root)
         else:
             self.make_node(self._root)
+            if self._export_type == 'all':
+                self.make_animation(self._root)
 
         return self._root

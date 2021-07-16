@@ -24,7 +24,7 @@ from panda3d.egg import EggTable, EggXfmSAnim
 
 
 class AnimationMixin(object):
-    def make_action(self, node, armature):
+    def make_action(self, node, armature, action):
         # <-- root table
         egg_root_table = EggTable('')
 
@@ -67,8 +67,7 @@ class AnimationMixin(object):
         # set animation data
         frame_start = bpy.context.scene.frame_start
         frame_end = bpy.context.scene.frame_end
-        if self._action and self._action in bpy.data.actions:
-            action = bpy.data.actions[self._action]
+        if action:
             armature.animation_data.action = action
             frame_start, frame_end = action.frame_range
 

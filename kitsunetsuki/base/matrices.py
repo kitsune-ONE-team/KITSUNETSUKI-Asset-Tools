@@ -28,6 +28,8 @@ def matrix_to_list(matrix):
 def get_bone_matrix_local(bone):
     if isinstance(bone, bpy.types.PoseBone):
         return bone.matrix
+    if isinstance(bone, bpy.types.EditBone):
+        return bone.matrix
     elif isinstance(bone, bpy.types.Bone):
         return bone.matrix_local
 

@@ -138,7 +138,7 @@ class AnimationMixin(object):
             for gltf_joint_id in gltf_skin['joints']:
                 gltf_joint = self._root['nodes'][gltf_joint_id]
                 bone = armature.pose.bones[gltf_joint['name']]
-                bone_matrix = get_bone_matrix(bone, armature)
+                bone_matrix = self._transform(get_bone_matrix(bone, armature))
 
                 rotation = quat_to_list(bone_matrix.to_quaternion())
                 scale = list(bone_matrix.to_scale())

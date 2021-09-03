@@ -263,10 +263,19 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         }
         self._root['skins'].append(gltf_skin)
 
+        bone_tails_local = {}
+        for bone_name, bone in armature.data.bones.items():
+            bone_tails_local[bone_name] = bone.tail
+
+        bone_tails_off = {}
+        with Mode('EDIT'):
+            for bone_name, bone in armature.data.edit_bones.items():
+                bone_tails_off[bone_name] = bone.tail - bone.head
+
         if self._pose_freeze:
             set_active_object(armature)
 
-            # disconnect bones
+            # disconnect all bones
             with Mode('EDIT'):
                 for bone_name, bone in armature.data.edit_bones.items():
                     bone.use_connect = False
@@ -276,13 +285,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 for bone_name, bone in armature.data.edit_bones.items():
                     bone.roll = 0
                     bone.length = 10
-
-                    # pos_matrix = mathutils.Matrix.Translation(bone.matrix.to_translation())
-                    # rot_matrix = bone.matrix.to_quaternion().to_matrix()
-                    # bone.transform(pos_matrix.inverted())  # reset origin
-                    # bone.transform(rot_matrix.inverted())  # reset rotation
-                    # bone.transform(pos_matrix)  # restore origin
-
                     bone.tail = bone.head + mathutils.Vector((0, bone.length, 0))
                     bone.roll = 0
 
@@ -290,8 +292,21 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         gltf_joints = {}
         for bone_name, bone in armature.data.bones.items():
             bone_matrix = self._transform(get_bone_matrix(bone, armature))
+            bone_tail_matrix = self._transform(
+                mathutils.Matrix.Translation(bone_tails_local[bone_name]))
+
             if self._pose_freeze:
                 bone_matrix = self._freeze(bone_matrix)
+                bone_tail_matrix = self._transform(
+                    mathutils.Matrix.Translation(bone_tails_off[bone_name]))
+
+            # print('\u2605' * 80)
+            # print(bone_name, bone_tails[bone_name], bone.matrix_basis)
+            # print(mathutils.Matrix.Translation(bone_tails[bone_name]).to_translation())
+            # print((mathutils.Matrix.Translation(bone_tails[bone_name]) @
+            #       bone.matrix.to_4x4() @
+            #       bone.matrix.to_4x4().inverted()).to_translation())
+
 
             gltf_joint = {
                 'name': bone_name,
@@ -299,7 +314,11 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 'rotation': quat_to_list(bone_matrix.to_quaternion()),
                 'scale': list(bone_matrix.to_scale()),
                 'translation': list(bone_matrix.to_translation()),
-                # 'matrix': matrix_to_list(bone_matrix),
+                'extras': {
+                    'tail': {
+                        'translation': list(bone_tail_matrix.to_translation()),
+                    }
+                }
             }
             gltf_joints[bone_name] = gltf_joint
 

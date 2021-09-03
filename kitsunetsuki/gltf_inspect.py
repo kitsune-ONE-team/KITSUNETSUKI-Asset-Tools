@@ -87,10 +87,20 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
         extra += ' {' + ', '.join(['{}: {}'.format(*i) for i in refs]) + '}'
 
     if 'VRM' in gltf_data['extensions']:
+        vrm_extra = []
+
         vrm_bones = gltf_data['extensions']['VRM']['humanoid']['humanBones']
         for vrm_bone in vrm_bones:
             if node_id == vrm_bone['node']:
-                extra += ' {VRM: %s}' % vrm_bone['bone']
+                vrm_extra.append('VRM bone: {}'.format(vrm_bone['bone']))
+
+        for group in gltf_data['extensions']['VRM']['secondaryAnimation']['boneGroups']:
+            if node_id in group['bones']:
+                vrm_extra.append('bonegroup')
+                break
+
+        if vrm_extra:
+            extra += ' {%s}' % ', '.join(vrm_extra)
 
     for child_node_id in gltf_node.get('children', []):
         child_gltf_node = gltf_data['nodes'][child_node_id]

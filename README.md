@@ -17,7 +17,7 @@ Tools
 Installing into Blender as addon
 --------------------------------
 
-* [Download](https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools/archive/refs/heads/master.zip) repository as ZIP file
+* Download addon in ZIP format from [Releases](https://github.com/kitsune-ONE-team/KITSUNETSUKI-Asset-Tools/releases)
 * Open _Edit_ - _Preferences_ - _Add-ons_ in Blender
 * Click _Install_ and choose downloaded ZIP file
 * Activate **KITSUNETSUKI Asset Tools** in the add-ons list

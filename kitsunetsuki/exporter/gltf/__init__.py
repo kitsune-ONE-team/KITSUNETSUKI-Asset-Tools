@@ -263,6 +263,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         }
         self._root['skins'].append(gltf_skin)
 
+        set_active_object(armature)
+
         bone_tails_local = {}
         for bone_name, bone in armature.data.bones.items():
             bone_tails_local[bone_name] = bone.tail
@@ -273,7 +275,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 bone_tails_off[bone_name] = bone.tail - bone.head
 
         if self._pose_freeze:
-            set_active_object(armature)
+            # set_active_object(armature)
 
             # disconnect all bones
             with Mode('EDIT'):

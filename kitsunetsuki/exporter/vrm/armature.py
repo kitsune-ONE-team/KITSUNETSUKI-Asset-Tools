@@ -33,8 +33,18 @@ class ArmatureMixin(object):
         def is_hips(bone):
             return is_bone_matches(bone, ('hips',))
 
-        def is_upper_leg(bone):
-            return is_bone_matches(bone, ('upperleg', 'upleg', 'thigh'))
+        def is_upper_leg(bone, strict=True):
+            names = ['thigh']
+            if not strict:
+                names.append('leg')
+            is_upper = is_bone_matches(bone, names)
+            is_child = is_hips(get_parent(bone))
+            return is_upper or is_child
+
+        def is_lower_leg(bone):
+            is_lower = is_bone_matches(bone, ('calf', 'shin', 'knee'))
+            is_child = is_upper_leg(get_parent(bone), strict=False)
+            return is_lower or is_child
 
         def is_hand(bone):
             return is_bone_matches(bone, ('hand', 'wrist'))
@@ -70,8 +80,7 @@ class ArmatureMixin(object):
         elif is_bone_matches(bone, ('eye',)):
             vrm_bone['bone'] = '{}Eye'.format(side)
 
-        elif (is_bone_matches(bone, ('lowerleg', 'calf', 'shin', 'knee')) or
-                is_upper_leg(get_parent(bone))):
+        elif is_lower_leg(bone):
             vrm_bone['bone'] = '{}LowerLeg'.format(side)
 
         elif is_upper_leg(bone):

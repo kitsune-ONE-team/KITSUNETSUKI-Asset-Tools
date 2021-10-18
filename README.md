@@ -27,6 +27,8 @@ Add-on will add two new menu entries in _File_ - _Export_:
 * Export glTF
 * Export VRM
 
+[![YouTube](http://img.youtube.com/vi/B-bRDg-Odco/0.jpg)](https://www.youtube.com/watch?v=B-bRDg-Odco)
+
 
 Installing into Anaconda / Miniconda as tool
 --------------------------------------------

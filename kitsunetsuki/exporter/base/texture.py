@@ -35,6 +35,34 @@ class TextureMixin(object):
                 material.node_tree, 'TEX_IMAGE', to_node=normal_map,
                 from_socket_name='Color', to_socket_name='Color')
 
+    def get_emission_map(self, material, shader):
+        # Mix RGB [Color] -> [Emission Strength] Principled BSDF
+        mix_node = get_from_node(
+            material.node_tree, 'MIX_RGB', to_node=shader,
+            from_socket_name='Color', to_socket_name='Emission Strength')
+        # Math [Value] -> [Emission Strength] Principled BSDF
+        math_node = get_from_node(
+            material.node_tree, 'MATH', to_node=shader,
+            from_socket_name='Value', to_socket_name='Emission Strength')
+
+        if mix_node:
+            # Image Texture [Color] -> [Color1/Color2] Mix
+            for input_ in mix_node.inputs:
+                if input_.name.startswith('Color') and input_.is_linked:
+                    return get_from_node(
+                        material.node_tree, 'TEX_IMAGE', to_node=mix_node,
+                        from_socket_name='Color', to_socket_name=input_.name)
+        elif math_node:
+            # Image Texture [Color] -> [Input] Math
+            return get_from_node(
+                material.node_tree, 'TEX_IMAGE', to_node=math_node,
+                from_socket_name='Color', to_socket_name='Value')
+        else:
+            # Image Texture [Color] -> [Emission Strength] Principled BSDF
+            return get_from_node(
+                material.node_tree, 'TEX_IMAGE', to_node=shader,
+                from_socket_name='Color', to_socket_name='Emission Strength')
+
     def get_specular_map(self, material, shader):
         # Math [Value] -> [Specular] Principled BSDF
         math_node = get_from_node(
@@ -103,14 +131,14 @@ class TextureMixin(object):
                     if self._empty_textures:  # fill empty slot
                         result = self.make_empty_texture(type_)
                         results.append((type_,) + result)
-                    else:
+                    elif self._render_type == 'rp':
                         break
 
                 elif image_texture:
                     result = self.make_texture(type_, image_texture)
                     results.append((type_,) + result)
 
-                if i >= last_texid:
+                if i >= last_texid and self._render_type == 'rp':
                     break
 
         return results

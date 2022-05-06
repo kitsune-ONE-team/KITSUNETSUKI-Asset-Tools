@@ -90,21 +90,30 @@ class GLTFBuffer(object):
         for gltf_image in parent_node.get('images', []):
             extras = gltf_image.get('extras') or {}
 
+            part = None
+
             if 'uri' in extras:
                 tfilepath = os.path.join(os.path.dirname(self._filepath), extras['uri'])
                 with open(tfilepath, 'rb') as f:
                     part = f.read()
-                    view = {
-                        'buffer': len(parent_node['buffers']),
-                        'byteLength': len(part),
-                        'byteOffset': offset,
-                        'extras': extras,
-                    }
-                    parent_node['bufferViews'].append(view)
-                    gltf_image['bufferView'] = len(parent_node['bufferViews']) - 1
 
-                    offset += len(part)
-                    data += part
+            elif 'data' in extras:
+                part = extras.pop('data')
+
+            if not part:
+                continue
+
+            view = {
+                'buffer': len(parent_node['buffers']),
+                'byteLength': len(part),
+                'byteOffset': offset,
+                'extras': extras,
+            }
+            parent_node['bufferViews'].append(view)
+            gltf_image['bufferView'] = len(parent_node['bufferViews']) - 1
+
+            offset += len(part)
+            data += part
 
         if filepath:
             buffer_fp = filepath.replace('.gltf', '.bin')

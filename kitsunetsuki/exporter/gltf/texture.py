@@ -54,6 +54,7 @@ class TextureMixin(object):
                     self.get_roughness_map(material, shader)
                 ),
                 ('normalTexture', self.get_normal_map(material, shader)),
+                ('emissiveTexture', self.get_emission_map(material, shader)),
                 (None, ''),  # put a placeholder, because all textures are required
             )
 
@@ -72,13 +73,14 @@ class TextureMixin(object):
             'mimeType': 'image/{}'.format(image_texture.image.file_format.lower()),
         }
 
-        # gltf_image['uri'] = os.path.join(path, filepath)
         if self._output.endswith('.gltf'):  # external texture
             gltf_image['uri'] = os.path.join(path, filepath)
         else:  # embedded texture
-            gltf_image['extras'] = {
-                'uri': os.path.join(self.get_cwd(), filepath),
-            }
+            gltf_image['extras'] = {}
+            if image_texture.image.packed_file:
+                gltf_image['extras']['data'] = image_texture.image.packed_file.data
+            else:
+                gltf_image['extras']['uri'] = os.path.join(self.get_cwd(), filepath)
 
         if image_texture.extension == 'CLIP':
             gltf_sampler['wrapS'] = spec.CLAMP_TO_EDGE

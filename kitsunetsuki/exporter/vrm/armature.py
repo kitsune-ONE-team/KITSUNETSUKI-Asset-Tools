@@ -80,14 +80,14 @@ class ArmatureMixin(object):
         elif is_bone_matches(bone, ('eye',)):
             vrm_bone['bone'] = '{}Eye'.format(side)
 
+        elif is_bone_matches(bone, ('foot', 'ankle')):
+            vrm_bone['bone'] = '{}Foot'.format(side)
+
         elif is_lower_leg(bone):
             vrm_bone['bone'] = '{}LowerLeg'.format(side)
 
         elif is_upper_leg(bone):
             vrm_bone['bone'] = '{}UpperLeg'.format(side)
-
-        elif is_bone_matches(bone, ('foot', 'ankle')):
-            vrm_bone['bone'] = '{}Foot'.format(side)
 
         elif is_bone_matches(bone, ('toe',)):
             vrm_bone['bone'] = '{}Toes'.format(side)

@@ -35,6 +35,7 @@ class MaterialMixin(object):
             'pbrMetallicRoughness': {
                 'extras': {},
             },
+            'extras': {},
         }
 
         gltf_material['alphaMode'] = {
@@ -94,7 +95,6 @@ class MaterialMixin(object):
                 gltf_material['emissiveFactor'] = tuple(emit)
 
         else:  # not RenderPipeline
-            emission = (0, 0, 0)
             alpha = 1
 
             gltf_material['pbrMetallicRoughness'].update({
@@ -103,12 +103,17 @@ class MaterialMixin(object):
                 'roughnessFactor': self.get_roughness(material, shader),
             })
 
-            gltf_material['emissiveFactor'] = tuple(emission)
+            gltf_material['emissiveFactor'] = tuple(self.get_emission(material, shader))[:3]
             # if alpha < 1:
             #     gltf_material['alphaMode'] = 'BLEND'
             #     gltf_material['alphaCutoff'] = alpha
             # else:
             #     gltf_material['alphaMode'] = 'OPAQUE'
             #     gltf_material['alphaCutoff'] = 0
+
+        if material.node_tree is not None:
+            for node in material.node_tree.nodes:
+                if node.type == 'ATTRIBUTE':
+                    gltf_material['extras'][node.attribute_type.lower()] = node.attribute_name
 
         return gltf_material

@@ -36,6 +36,7 @@ setup(
         'kitsunetsuki.exporter.gltf',
         'kitsunetsuki.exporter.vrm',
         'kitsunetsuki.cardmaker',
+        'kitsunetsuki.lut',
     ),
     entry_points={
         'console_scripts': (
@@ -44,6 +45,7 @@ setup(
             'blend2vrm=kitsunetsuki.blend2vrm:main',
             'makecard=kitsunetsuki.makecard:main',
             'gltf-inspect=kitsunetsuki.gltf_inspect:main',
+            'palette2lut=kitsunetsuki.palette2lut:main',
         ),
     },
 )

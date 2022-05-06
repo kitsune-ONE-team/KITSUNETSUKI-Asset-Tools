@@ -18,7 +18,8 @@ import os
 
 from kitsunetsuki.base.collections import get_object_collection
 from kitsunetsuki.base.objects import (
-    get_object_properties, is_collision, is_object_visible)
+    get_object_properties, is_collision, is_object_visible,
+    set_active_object)
 
 from .geom import GeomMixin
 from .material import MaterialMixin
@@ -35,16 +36,19 @@ NOT_MERGED_TYPES = (
     'Dynamic',
     'Flipbook',
     'Slider',
+    'Alpha',
 )
 
 
 class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
     def __init__(self, args):
-        self._input = args.input
+        self._inputs = args.inputs
         self._output = args.output
 
-        if self._input:
-            bpy.ops.wm.open_mainfile(filepath=self._input)
+        if self._inputs:
+            bpy.ops.wm.open_mainfile(filepath=self._inputs[0])
+            for i in self._inputs[1:]:
+                bpy.ops.wm.append(filepath=i)
 
         # export type
         self._export_type = args.export or 'scene'
@@ -75,8 +79,8 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
         self._set_origin = args.set_origin is True
 
     def get_cwd(self):
-        if self._input:
-            return os.path.dirname(self._input)
+        if self._inputs:
+            return os.path.dirname(self._inputs[0])
         else:
             return ''
 
@@ -100,11 +104,23 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
         if is_collision(obj):
             return False
 
+        if not is_object_visible(obj):
+            return False
+
         obj_props = get_object_properties(obj)
         if obj_props.get('type') in NOT_MERGED_TYPES:
             return False
 
-        return True
+        if obj.type == 'MESH':
+            for material in obj.data.materials:
+                if material.node_tree:
+                    for node in material.node_tree.nodes:
+                        if node.type == 'ATTRIBUTE':
+                            return False
+
+            return True
+
+        return False
 
     def make_root_node(self):
         raise NotImplementedError()
@@ -164,7 +180,6 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
             children = obj.children
 
         for child in children:
-            # print(child)
             if not is_object_visible(child) and not is_collision(child):
                 continue
 
@@ -182,6 +197,31 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
             for script_name in self._script_names:
                 if script_name:
                     self.execute_script(script_name)
+
+        if self._merge:
+            for collection in bpy.data.collections:
+                if collection.name == 'RigidBodyWorld':
+                    continue
+
+                objects = list(filter(self.can_merge, collection.objects))
+                if not objects:
+                    continue
+
+                bpy.ops.object.select_all(action='DESELECT')
+                for obj in objects:
+                    obj.select_set(state=True)
+                set_active_object(objects[0])
+
+                context = {
+                    'active_object': objects[0],
+                    'selected_objects': objects,
+                    'selected_editable_objects': objects,
+                }
+
+                bpy.ops.object.join(context)
+                bpy.ops.object.select_all(action='DESELECT')
+                bpy.context.view_layer.objects.active.name = collection.name
+                set_active_object(None)
 
         self._root = self.make_root_node()
 

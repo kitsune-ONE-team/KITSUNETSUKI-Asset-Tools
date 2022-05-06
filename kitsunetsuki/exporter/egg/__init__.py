@@ -48,7 +48,7 @@ class EggExporter(
     """
     def __init__(self, args):
         super().__init__(args)
-        self._output = args.output or args.input.replace('.blend', '.egg')
+        self._output = args.output or args.inputs[0].replace('.blend', '.egg')
 
     def make_root_node(self):
         egg_root = EggData()

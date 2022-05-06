@@ -131,9 +131,9 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
         gltf_node['materials'] = []
 
         # make thumbnail
-        if self._input:
-            prefix = os.path.basename(self._input).replace('.blend', '.png')
-            inpdir = os.path.dirname(os.path.abspath(self._input))
+        if self._inputs:
+            prefix = os.path.basename(self._inputs[0]).replace('.blend', '.png')
+            inpdir = os.path.dirname(os.path.abspath(self._inputs[0]))
             if os.path.exists(inpdir) and os.path.isdir(inpdir):
                 for filename in reversed(sorted(os.listdir(inpdir))):
                     if filename.startswith(prefix):
@@ -327,7 +327,7 @@ class VRMExporterOperator(bpy.types.Operator, ExportHelper):
             return {'CANCELLED'}
 
         class Args(object):
-            input = None
+            inputs = []
             output = self.filepath
             export = 'all'
             render = 'default'

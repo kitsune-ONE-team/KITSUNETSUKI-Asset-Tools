@@ -25,7 +25,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        'input', type=str, help='Input .blend file path.')
+        'inputs', type=str, help='Input .blend file path.', nargs='*')
     parser.add_argument(
         '-b', '--background', action='store_true', required=False,
         help="Blender's argument placeholder.")

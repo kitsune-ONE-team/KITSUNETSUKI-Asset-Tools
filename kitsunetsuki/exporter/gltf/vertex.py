@@ -72,7 +72,8 @@ class VertexMixin(object):
         if not self._z_up:
             t = self._matrix @ t
         if can_merge and not self._pose_freeze:
-            t = obj_matrix @ t
+            # t = obj_matrix @ t
+            t = obj_matrix.to_euler().to_matrix() @ t
         x, y, z = t
 
         if 'TANGENT' not in gltf_primitive['attributes']:

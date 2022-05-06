@@ -49,7 +49,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
     """
     def __init__(self, args):
         super().__init__(args)
-        self._output = args.output or args.input.replace('.blend', '.gltf')
+        self._output = args.output or args.inputs[0].replace('.blend', '.gltf')
         self._z_up = getattr(args, 'z_up', False)
         self._pose_freeze = getattr(args, 'pose_freeze', False)
         self._split_primitives = getattr(args, 'split_primitives', False)
@@ -302,13 +302,10 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 bone_tail_matrix = self._transform(
                     mathutils.Matrix.Translation(bone_tails_off[bone_name]))
 
-            # print('\u2605' * 80)
-            # print(bone_name, bone_tails[bone_name], bone.matrix_basis)
             # print(mathutils.Matrix.Translation(bone_tails[bone_name]).to_translation())
             # print((mathutils.Matrix.Translation(bone_tails[bone_name]) @
             #       bone.matrix.to_4x4() @
             #       bone.matrix.to_4x4().inverted()).to_translation())
-
 
             gltf_joint = {
                 'name': bone_name,
@@ -363,6 +360,7 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         gltf_node = {
             'name': name,
             'children': [],
+            'extras': {},
         }
 
         gltf_mesh = None
@@ -396,6 +394,13 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         self._setup_node(gltf_node, obj, can_merge=can_merge)
         self._add_child(parent_node, gltf_node)
 
+        if obj.type == 'MESH':
+            for material in obj.data.materials:
+                if material and material.node_tree:  # not and empty slot and have nodes tree
+                    for node in material.node_tree.nodes:
+                        if node.type == 'ATTRIBUTE':
+                            gltf_node['extras'][node.attribute_type.lower()] = node.attribute_name
+
         return gltf_node, gltf_mesh
 
     def make_mesh(self, parent_node, obj):
@@ -405,7 +410,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         gltf_node = None
 
         # merged nodes
-        if self.can_merge(obj):
+        # if self.can_merge(obj):
+        if False:
             collection = get_object_collection(obj)
 
             for child in self._root['nodes']:
@@ -426,7 +432,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
                 self.make_geom(gltf_node, gltf_mesh, obj, can_merge=True)
 
         # separate nodes
-        if not self.can_merge(obj) or self._keep:
+        # if not self.can_merge(obj) or self._keep:
+        if True:
             obj_props = get_object_properties(obj)
             if obj_props.get('type') == 'Portal':
                 vertices = [list(vertex.co) for vertex in obj.data.vertices]
@@ -526,7 +533,7 @@ class GLTFExporterOperator(bpy.types.Operator, ExportHelper):
             return {'CANCELLED'}
 
         class Args(object):
-            input = None
+            inputs = []
             output = self.filepath
             export = 'all'
             render = 'default'

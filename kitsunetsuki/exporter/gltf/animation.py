@@ -61,6 +61,10 @@ class AnimationMixin(object):
                 gltf_skin = self._root['skins'][gltf_node['skin']]
                 break
 
+        if not gltf_skin:
+            print('FAILED TO FIND GLTF SKIN')
+            return
+
         # <-- animation
         gltf_animation = {
             'name': action.name if action else 'GLTF_ANIMATION',
@@ -108,7 +112,7 @@ class AnimationMixin(object):
         # set animation data
         frame_start = bpy.context.scene.frame_start
         frame_end = bpy.context.scene.frame_end
-        if action:
+        if action and armature.animation_data:
             armature.animation_data.action = action
             frame_start, frame_end = action.frame_range
 

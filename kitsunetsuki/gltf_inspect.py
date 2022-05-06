@@ -151,23 +151,26 @@ def print_anim(gltf_data, gltf_anim):
 def print_mat(gltf_data, gltf_mat):
     tex_ids = []
     if 'baseColorTexture' in gltf_mat.get('pbrMetallicRoughness', {}):
-        tex_ids.append(gltf_mat['pbrMetallicRoughness']['baseColorTexture']['index'])
+        tex_ids.append(('Color', gltf_mat['pbrMetallicRoughness']['baseColorTexture']['index']))
     if 'metallicRoughnessTexture' in gltf_mat.get('pbrMetallicRoughness', {}):
-        tex_ids.append(gltf_mat['pbrMetallicRoughness']['metallicRoughnessTexture']['index'])
+        tex_ids.append(('MetRough', gltf_mat['pbrMetallicRoughness']['metallicRoughnessTexture']['index']))
     if 'normalTexture' in gltf_mat:
-        tex_ids.append(gltf_mat['normalTexture']['index'])
+        tex_ids.append(('Norm', gltf_mat['normalTexture']['index']))
     if 'emissiveTexture' in gltf_mat:
-        tex_ids.append(gltf_mat['emissiveTexture']['index'])
+        tex_ids.append(('Emit', gltf_mat['emissiveTexture']['index']))
 
     print(' [M] {}'.format(gltf_mat['name']))
-    for tex_id in tex_ids:
-        print_tex(gltf_data, gltf_data['textures'][tex_id])
+    for tex_type, tex_id in tex_ids:
+        print_tex(gltf_data, tex_type, gltf_data['textures'][tex_id])
 
 
-def print_tex(gltf_data, gltf_tex):
+def print_tex(gltf_data, gltf_tex_type, gltf_tex):
     sampler = gltf_data['samplers'][gltf_tex['sampler']]
     source = gltf_data['images'][gltf_tex['source']]
-    print('  + [T] {}'.format(sampler.get('name', 'SAMPLER')))
+    print('  + [T] {name} <{type}>'.format(**{
+        'type': gltf_tex_type,
+        'name': sampler.get('name', 'SAMPLER'),
+    }))
 
 
 def main():

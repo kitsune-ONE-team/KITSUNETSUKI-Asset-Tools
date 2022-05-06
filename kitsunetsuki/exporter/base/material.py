@@ -54,32 +54,21 @@ class MaterialMixin(object):
             return shader.inputs['Roughness'].default_value
 
     def get_emission(self, material, shader):
-        if not shader.inputs['Emission'].is_linked and not shader.inputs['Emission Strength'].is_linked:
-            r, g, b, *_ = shader.inputs['Emission'].default_value
-            e = shader.inputs['Emission Strength'].default_value
-            return (r * e, g * e, b * e)
+        # if not shader.inputs['Emission'].is_linked and not shader.inputs['Emission Strength'].is_linked:
+        #     r, g, b, *_ = shader.inputs['Emission'].default_value
+        #     e = shader.inputs['Emission Strength'].default_value
+        #     return (r * e, g * e, b * e)
 
-        # Mix RGB [Color] -> [Emission Strength] Principled BSDF
+        # Mix RGB [Color] -> [Emission] Principled BSDF
         mix_node = get_from_node(
             material.node_tree, 'MIX_RGB', to_node=shader,
-            from_socket_name='Color', to_socket_name='Emission Strength')
-        # Math [Value] -> [Emission Strength] Principled BSDF
-        math_node = get_from_node(
-            material.node_tree, 'MATH', to_node=shader,
-            from_socket_name='Value', to_socket_name='Emission Strength')
-
+            from_socket_name='Color', to_socket_name='Emission')
         if mix_node:
             for input_ in mix_node.inputs:
                 if input_.name.startswith('Color') and not input_.is_linked:
                     return input_.default_value
-        elif math_node:
-            for input_ in math_node.inputs:
-                if input_.name == 'Value' and not input_.is_linked:
-                    x = input_.default_value
-                    return (x, x, x)
         else:
-            x = shader.inputs['Emission Strength'].default_value
-            return (x, x, x)
+            return shader.inputs['Emission'].default_value
 
     def get_normal_strength(self, material, shader):
         # Normal Map [Normal] -> [Normal] Principled BSDF

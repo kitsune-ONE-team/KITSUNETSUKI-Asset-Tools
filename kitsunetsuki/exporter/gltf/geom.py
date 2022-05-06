@@ -124,6 +124,10 @@ class GeomMixin(object):
         gltf_materials = {}
         if not self._no_materials and not is_collision(obj):
             for material in mesh.materials.values():
+                # empty material slot
+                if not material:
+                    continue
+
                 # material
                 for i, child in enumerate(self._root['materials']):  # existing material
                     if child['name'] == material.name:
@@ -224,7 +228,8 @@ class GeomMixin(object):
             if not self._no_materials:
                 try:
                     material = mesh.materials[polygon.material_index]
-                    mname = material.name
+                    if material:
+                        mname = material.name
                 except IndexError:
                     pass
 

@@ -19,6 +19,11 @@ import copy
 import decimal
 import math
 
+try:
+    from collections.abc import Callable
+except ImportError:
+    from collections import Callable
+
 from kitsunetsuki.base.matrices import get_bone_matrix, quat_to_list
 
 from . import spec
@@ -129,7 +134,7 @@ class AnimationMixin(object):
                 bpy.context.scene.frame_current = frame_int
                 bpy.context.scene.frame_set(frame_int)
 
-            if isinstance(self._speed_scale, collections.Callable):
+            if isinstance(self._speed_scale, Callable):
                 speed_scale = self._speed_scale(frame_int)
             else:
                 speed_scale = self._speed_scale

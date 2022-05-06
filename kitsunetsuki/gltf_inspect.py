@@ -201,6 +201,13 @@ def main():
         with open(args.input, 'r') as f:
             gltf_data = json.load(f)
 
+    if 'generator' in gltf_data.get('asset', {}):
+        print('glTF generator: {}'.format(gltf_data['asset']['generator']))
+
+    if 'VRM' in gltf_data.get('extensions', {}):
+        vrm_meta = gltf_data['extensions']['VRM']
+        print('VRM exporter: {}'.format(vrm_meta['exporterVersion']))
+
     print_scene(gltf_data, gltf_data['scene'], extras=args.extras)
 
     for gltf_anim in (gltf_data.get('animations') or []):

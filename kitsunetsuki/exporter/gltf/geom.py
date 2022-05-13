@@ -351,6 +351,11 @@ class GeomMixin(object):
                         joint_id = gltf_joints[obj_vertex_group.name]
                         joints_weights.append([joint_id, vertex_group.weight])
 
+                    # objects reparented to bone instead of entire armature
+                    if obj.parent_type == 'BONE' and obj.parent_bone in gltf_joints:
+                        joint_id = gltf_joints[obj.parent_bone]
+                        joints_weights.append([joint_id, 1])
+
                     # padding
                     while ((len(joints_weights) % 4 != 0) or
                             (len(joints_weights) < max_joint_layers * 4)):

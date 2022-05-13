@@ -16,7 +16,6 @@
 import bpy
 import configparser
 import os
-import json
 
 from bpy_extras.io_utils import ExportHelper
 from typing import Set, cast
@@ -67,6 +66,8 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
         if text:
             data = configparser.ConfigParser()
             data.read_string(text.as_string())
+        else:
+            raise RuntimeError('Missing "VRM.ini" text block.')
 
         vrm_meta = {
             'exporterVersion': gltf_node['asset']['generator'],

@@ -17,7 +17,7 @@
 bl_info = {
     'name': 'KITSUNETSUKI Asset Tools',
     'author': 'kitsune.ONE team',
-    'version': (0, 6, 8),
+    'version': (0, 6, 9),
     'blender': (2, 92, 0),
     'location': 'File > Import-Export',
     'description': 'Exports: glTF, VRM',
@@ -56,17 +56,13 @@ if 'bpy' in locals():
 def register():
     import bpy
 
-    if bpy.app.version < bl_info['blender'][:2]:
-        cur_ver = '.'.join(bpy.app.version)
-        req_ver = '.'.join(bl_info['blender'][:2])
+    if bpy.app.version[:2] < bl_info['blender'][:2]:
+        cur_ver = '{}.{}'.format(*bpy.app.version[:2])
+        req_ver = '{}.{}'.format(*bl_info['blender'][:2])
         raise Exception(
-            "This add-on doesn't support Blender version less than "
-            ' {req_ver} or greater is recommended '
-            'but the current version is {cur_ver}'.format(**{
-                'cur_ver': cur_ver,
-                'req_ver': req_ver,
-            })
-        )
+            f"This add-on doesn't support Blender version less than {req_ver}. "
+            f'Blender version {req_ver} or greater is recommended, '
+            f'but the current version is {cur_ver}')
 
     from . import blend2gltf, blend2vrm
     blend2gltf.register(bl_info['version'])

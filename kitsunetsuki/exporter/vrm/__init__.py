@@ -25,6 +25,27 @@ from ..gltf import spec
 from .armature import ArmatureMixin
 
 
+BLENDSHAPE_PRESETS = (
+    'neutral',
+    'a',
+    'i',
+    'u',
+    'e',
+    'o',
+    'blink',
+    'joy',
+    'angry',
+    'sorrow',
+    'fun',
+    'lookup',
+    'lookdown',
+    'lookleft',
+    'lookright',
+    'blink_l',
+    'blink_r',
+)
+
+
 class VRMExporter(ArmatureMixin, GLTFExporter):
     def __init__(self, args):
         super().__init__(args)
@@ -56,7 +77,8 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
         }
         gltf_node['textures'].append(gltf_texture)
 
-        gltf_node['extensions']['VRM']['meta']['texture'] = len(gltf_node['textures']) - 1
+        texid = len(gltf_node['textures']) - 1
+        gltf_node['extensions']['VRM']['meta']['texture'] = texid
 
     def make_root_node(self):
         gltf_node = super().make_root_node()
@@ -245,9 +267,13 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
             'vrc.blink_right': 'Blink_R',
         }.get(name, name)
 
+        preset = 'unknown'
+        if vrm_name.lower() in BLENDSHAPE_PRESETS:
+            preset = vrm_name.lower()
+
         vrm_blend_shape = {
             'name': vrm_name,
-            'presetName': vrm_name.lower(),
+            'presetName': preset,
             'isBinary': False,
             'binds': [],  # bind to mesh ID and shape key ID with shape key weight
             'materialValues': [],  # material values override
@@ -276,7 +302,7 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
         vrm_blend_shapes = {
             'Neutral': {
                 'name': 'Neutral',
-                'presetName': 'Neutral',
+                'presetName': 'neutral',
                 'isBinary': False,
                 'binds': [],
                 'materialValues': [],

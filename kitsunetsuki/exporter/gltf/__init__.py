@@ -146,6 +146,8 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         if 'scenes' in parent_node:
             self._root['scenes'][0]['nodes'].append(node_id)
         else:
+            if 'children' not in parent_node:
+                parent_node['children'] = []
             parent_node['children'].append(node_id)
 
     def _setup_node(self, node, obj=None, can_merge=False):
@@ -235,7 +237,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
     def make_empty(self, parent_node, obj):
         gltf_node = {
             'name': obj.name,
-            'children': [],
         }
 
         self._setup_node(gltf_node, obj)
@@ -254,7 +255,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         gltf_armature = {
             'name': armature.name,
-            'children': [],
         }
         gltf_skin = {
             'name': armature.name,
@@ -309,7 +309,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
             gltf_joint = {
                 'name': bone_name,
-                'children': [],
                 'rotation': quat_to_list(bone_matrix.to_quaternion()),
                 'scale': list(bone_matrix.to_scale()),
                 'translation': list(bone_matrix.to_translation()),
@@ -359,7 +358,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
         """
         gltf_node = {
             'name': name,
-            'children': [],
             'extras': {},
         }
 
@@ -464,7 +462,6 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
 
         gltf_light = {
             'name': obj.name,
-            'children': [],
             'extras': {
                 'type': 'Light',
                 'light': LIGHT_TYPES[obj.data.type],
@@ -494,6 +491,10 @@ class GLTFExporter(AnimationMixin, GeomMixin, MaterialMixin,
             with open(output, 'wb') as f:  # binary mode
                 chunk1 = self._buffer.export(root)  # export buffer first because it updates gltf data
                 chunk0 = json.dumps(root, indent=4).encode()  # export gltf data
+                while len(chunk0) % 4:
+                    chunk0 += b' '
+                while len(chunk1) % 4:
+                    chunk1 += b'\x00'
 
                 # write global headers
                 f.write(b'glTF')  # header

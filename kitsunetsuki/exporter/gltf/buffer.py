@@ -43,6 +43,23 @@ class GLTFBuffer(object):
         }[self._metadata[channel_id]['type']]
         assert size == len(values)
 
+        if 'min' not in self._metadata[channel_id]:
+            self._metadata[channel_id]['min'] = [None] * size
+
+        if 'max' not in self._metadata[channel_id]:
+            self._metadata[channel_id]['max'] = [None] * size
+
+        for i, value in enumerate(values):
+            if self._metadata[channel_id]['min'][i] is None:
+                self._metadata[channel_id]['min'][i] = value
+            else:
+                self._metadata[channel_id]['min'][i] = min(self._metadata[channel_id]['min'][i], value)
+
+            if self._metadata[channel_id]['max'][i] is None:
+                self._metadata[channel_id]['max'][i] = value
+            else:
+                self._metadata[channel_id]['max'][i] = max(self._metadata[channel_id]['max'][i], value)
+
         type_ = {
             spec.TYPE_UNSIGNED_BYTE: 'B',
             spec.TYPE_UNSIGNED_SHORT: 'H',

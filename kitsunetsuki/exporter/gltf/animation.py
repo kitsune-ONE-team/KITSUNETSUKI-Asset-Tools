@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-import collections
 import copy
 import decimal
 import math

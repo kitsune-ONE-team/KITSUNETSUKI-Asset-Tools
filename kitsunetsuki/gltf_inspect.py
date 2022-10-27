@@ -86,7 +86,7 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
 
         extra += ' {' + ', '.join(['{}: {}'.format(*i) for i in refs]) + '}'
 
-    if 'VRM' in gltf_data['extensions']:
+    if 'VRM' in (gltf_data.get('extensions') or {}):
         vrm_extra = []
 
         vrm_bones = gltf_data['extensions']['VRM']['humanoid']['humanBones']

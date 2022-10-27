@@ -35,7 +35,6 @@ class GeomMixin(object):
         gltf_primitive = {
             'attributes': {},
             'material': 0,
-            'targets': [],
             # 'mode': 4,
             'extras': {
                 'highest_index': -1,
@@ -55,14 +54,13 @@ class GeomMixin(object):
 
         if gltf_mesh['primitives'] and not self._split_primitives:
             gltf_primitive['attributes'] = gltf_mesh['primitives'][0]['attributes']
-            gltf_primitive['targets'] = gltf_mesh['primitives'][0]['targets']
+            if 'targets' in gltf_mesh['primitives'][0]:
+                gltf_primitive['targets'] = gltf_mesh['primitives'][0]['targets']
 
         else:
             channel = self._buffer.add_channel({
                 'componentType': spec.TYPE_FLOAT,
                 'type': 'VEC3',
-                # 'max': [1] * 3,
-                # 'min': [-1] * 3,
                 'extras': {
                     'reference': 'NORMAL',
                 },
@@ -88,8 +86,6 @@ class GeomMixin(object):
                 channel = self._buffer.add_channel({
                     'componentType': spec.TYPE_FLOAT,
                     'type': 'VEC3',
-                    # 'max': [1000] * 3,
-                    # 'min': [-1000] * 3,
                     'extras': {
                         'reference': 'POSITION',
                         'target': sk_name,
@@ -97,6 +93,8 @@ class GeomMixin(object):
                 })
                 gltf_target['POSITION'] = channel['bufferView']
 
+                if 'targets' not in gltf_primitive:
+                    gltf_primitive['targets'] = []
                 gltf_primitive['targets'].append(gltf_target)
 
         return gltf_primitive
@@ -359,7 +357,7 @@ class GeomMixin(object):
                     # padding
                     while ((len(joints_weights) % 4 != 0) or
                             (len(joints_weights) < max_joint_layers * 4)):
-                        joints_weights.append((0, 0))
+                        joints_weights.append([0, 0])
 
                     # limit by max joints
                     joints_weights = joints_weights[:max_joint_layers * 4]
@@ -370,8 +368,13 @@ class GeomMixin(object):
                         if weight > wmax:
                             imax = j
                             wmax = weight
-                    if self._norm_weights and imax >= 0:
-                        joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
+                    # if self._norm_weights and imax >= 0:
+                    #     joints_weights[imax][1] += 1 - sum(list(zip(*joints_weights))[1])
+                    if self._norm_weights:
+                        weights = list(zip(*joints_weights))[1]
+                        weights_sum = sum(weights)
+                        for j in range(len(joints_weights)):
+                            joints_weights[j][1] *= 1 / weights_sum
 
                     # group by 4 joint-weight pairs
                     joints_weights_groups = []

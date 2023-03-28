@@ -144,7 +144,7 @@ class VRMExporter(ArmatureMixin, GLTFExporter):
             },
             'secondaryAnimation': {
                 'boneGroups': [],
-                'colliderGroups': [],
+                # 'colliderGroups': [],
             },
             'materialProperties': [],
         }

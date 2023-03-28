@@ -143,7 +143,7 @@ class ArmatureMixin(object):
             'center': -1,
             'hitRadius': 0,
             'bones': [gltf_node_id],
-            'colliderGroups': [],
+            # 'colliderGroups': [],
         }
 
         if bone.get('jiggle_stiffness', None) is not None:
@@ -231,5 +231,13 @@ class ArmatureMixin(object):
                     vrm_spring = self._make_vrm_spring(gltf_node_id, pose_bone)
                     vrm_springs.add(pose_bone.name)
                     self._root['extensions']['VRM']['secondaryAnimation']['boneGroups'].append(vrm_spring)
+
+        gltf_secondary = {
+            'name': 'secondary',
+            'translation': [0, 0, 0],
+            'rotation': [0, 0, 0, 1],
+            'scale': [1, 1, 1],
+        }
+        self._add_child(gltf_armature, gltf_secondary)
 
         return gltf_armature

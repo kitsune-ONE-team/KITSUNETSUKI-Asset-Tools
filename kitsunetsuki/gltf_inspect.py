@@ -31,7 +31,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extras=None):
+def print_node(gltf_data, node_id, joints=None, skeletons=None,
+               indent=1, parent_node=None, extras=None):
     gltf_node = gltf_data['nodes'][node_id]
 
     type_ = 'N'
@@ -58,10 +59,15 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
     if matrix:
         extra += ' <{}>'.format(matrix)
 
-    if node_id in (joints or []):
+    if node_id in (skeletons or []):
+        type_ = 'S'  # skeleton/armature
+    elif node_id in (joints or []):
         type_ = 'J'  # joint/bone
 
-    elif 'skin' in gltf_node:
+    if 'mesh' in gltf_node:
+        type_ = 'M'  # mesh/geometry
+
+    if 'skin' in gltf_node:
         refs = []
 
         if 'skin' in gltf_node:
@@ -102,13 +108,13 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
         if vrm_extra:
             extra += ' {%s}' % ', '.join(vrm_extra)
 
-    for child_node_id in gltf_node.get('children', []):
-        child_gltf_node = gltf_data['nodes'][child_node_id]
-        if 'skin' in child_gltf_node:
-            type_ = 'S'  # skeleton/armature
-            skin_id = child_gltf_node['skin']
-            gltf_skin = gltf_data['skins'][skin_id]
-            joints = gltf_skin['joints']
+    # for child_node_id in gltf_node.get('children', []):
+    #     child_gltf_node = gltf_data['nodes'][child_node_id]
+    #     if 'skin' in child_gltf_node:
+    #         # type_ = 'S'  # skeleton/armature
+    #         skin_id = child_gltf_node['skin']
+    #         gltf_skin = gltf_data['skins'][skin_id]
+    #         # joints = gltf_skin['joints']
 
     is_ = ''
     for i in range(indent):
@@ -126,16 +132,32 @@ def print_node(gltf_data, node_id, joints=None, indent=1, parent_node=None, extr
 
     for child_node_id in gltf_node.get('children', []):
         print_node(
-            gltf_data, child_node_id,
-            joints=joints, indent=indent + 1, parent_node=gltf_node)
+            gltf_data, child_node_id, joints=joints, skeletons=skeletons,
+            indent=indent + 1, parent_node=gltf_node)
 
 
 def print_scene(gltf_data, scene_id, extras=False):
     gltf_scene = gltf_data['scenes'][scene_id]
     print(' [R] {}'.format(gltf_scene.get('name', 'SCENE')))
 
+    # child to parent mapping
+    parents = {}
+    for parent_id, gltf_node in enumerate(gltf_data['nodes']):
+        for child_id in gltf_node.get('children', ()):
+            parents[child_id] = parent_id
+
+    skeletons = set()
+    joints = set()
+    for gltf_skin in gltf_data['skins']:
+        joints |= set(gltf_skin['joints'])
+        # search for the root bone
+        for joint_id in gltf_skin['joints']:
+            if parents.get(joint_id) not in gltf_skin['joints']:  # no parent bone
+                skeletons.add(joint_id)  # mark root bone as skeleton
+                break
+
     for node_id in gltf_scene['nodes']:
-        print_node(gltf_data, node_id, extras=extras)
+        print_node(gltf_data, node_id, joints=joints, skeletons=skeletons, extras=extras)
 
 
 def print_anim(gltf_data, gltf_anim):
@@ -166,7 +188,7 @@ def print_mat(gltf_data, gltf_mat):
 
 def print_tex(gltf_data, gltf_tex_type, gltf_tex):
     sampler = gltf_data['samplers'][gltf_tex['sampler']]
-    source = gltf_data['images'][gltf_tex['source']]
+    # source = gltf_data['images'][gltf_tex['source']]
     print('  + [T] {name} <{type}>'.format(**{
         'type': gltf_tex_type,
         'name': sampler.get('name', 'SAMPLER'),

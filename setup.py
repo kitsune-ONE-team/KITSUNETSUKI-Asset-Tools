@@ -34,7 +34,6 @@ setup(
         'kitsunetsuki.base',
         'kitsunetsuki.exporter',
         'kitsunetsuki.exporter.base',
-        'kitsunetsuki.exporter.egg',
         'kitsunetsuki.exporter.gltf',
         'kitsunetsuki.exporter.vrm',
         'kitsunetsuki.cardmaker',
@@ -42,7 +41,6 @@ setup(
     ),
     entry_points={
         'console_scripts': (
-            'blend2egg=kitsunetsuki.blend2egg:main',
             'blend2gltf=kitsunetsuki.blend2gltf:main',
             'blend2vrm=kitsunetsuki.blend2vrm:main',
             'makecard=kitsunetsuki.makecard:main',

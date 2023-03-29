@@ -4,3 +4,4 @@
 *.vrm
 *.zip
 __pycache__
+/build/

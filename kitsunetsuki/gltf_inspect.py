@@ -188,10 +188,10 @@ def print_mat(gltf_data, gltf_mat):
 
 def print_tex(gltf_data, gltf_tex_type, gltf_tex):
     sampler = gltf_data['samplers'][gltf_tex['sampler']]
-    # source = gltf_data['images'][gltf_tex['source']]
+    source = gltf_data['images'][gltf_tex['source']]
     print('  + [T] {name} <{type}>'.format(**{
         'type': gltf_tex_type,
-        'name': sampler.get('name', 'SAMPLER'),
+        'name': source.get('name', 'SAMPLER'),
     }))
 
 

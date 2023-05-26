@@ -118,8 +118,12 @@ class BVHQExporter(Exporter):
             frame_data = []
             for bone_data in hierarchy:
                 bone = armature.pose.bones[bone_data['joint']]
-                matrix = bone.matrix
-                pos = matrix.to_translation()
+                if bone.parent:
+                    matrix = bone.parent.matrix.inverted() @ bone.matrix
+                    pos = bone.parent.matrix.inverted() @ bone.head
+                else:
+                    matrix = bone.matrix
+                    pos = bone.head
                 quat = matrix.to_quaternion()
                 channels = {
                     'Xposition': pos.x,

@@ -41,6 +41,11 @@ class BVHQExporter(Exporter):
         self._speed_scale = 1
         self._output = args.output or args.inputs[0].replace('.blend', '.bvhq')
 
+    def _execute_script(self, name):
+        super()._execute_script(name)
+        if 'SPEED_SCALE' in self._script_locals:
+            self._speed_scale = self._script_locals['SPEED_SCALE']
+
     def _export(self, armature):
         hierarchy = []
 

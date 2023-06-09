@@ -148,7 +148,7 @@ def print_scene(gltf_data, scene_id, extras=False):
 
     skeletons = set()
     joints = set()
-    for gltf_skin in gltf_data['skins']:
+    for gltf_skin in gltf_data.get('skins') or []:
         joints |= set(gltf_skin['joints'])
         # search for the root bone
         for joint_id in gltf_skin['joints']:
@@ -181,7 +181,14 @@ def print_mat(gltf_data, gltf_mat):
     if 'emissiveTexture' in gltf_mat:
         tex_ids.append(('Emit', gltf_mat['emissiveTexture']['index']))
 
-    print(' [M] {}'.format(gltf_mat['name']))
+    extra = ''
+    if 'emissiveFactor' in gltf_mat:
+        extra += 'emissive: #{:02X}{:02X}{:02X}'.format(*[
+            x * 255 for x in gltf_mat['emissiveFactor']])
+    if extra:
+        extra = ' {' + extra + '}'
+
+    print(' [M] {}'.format(gltf_mat['name']) + extra)
     for tex_type, tex_id in tex_ids:
         print_tex(gltf_data, tex_type, gltf_data['textures'][tex_id])
 

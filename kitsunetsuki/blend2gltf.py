@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2020 kitsune.ONE team.
+# Copyright (c) 2023 kitsune.ONE team.
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,6 +44,9 @@ def parse_args():
     parser.add_argument(
         '-x', '--exec', type=str, required=False,
         help='Internal script name to execute.')
+    parser.add_argument(
+        '-xp', '--exec-post', type=str, required=False,
+        help='Internal script name to execute in the post processing stage.')
     parser.add_argument(
         '-a', '--action', type=str, required=False,
         help='Action name to export.')
@@ -96,23 +99,7 @@ def main():
     from kitsunetsuki.exporter.gltf import GLTFExporter
 
     e = GLTFExporter(args)
-    out, buf = e.convert()
-
-    if args.output:
-        if args.output.endswith('.gltf'):
-            # write buffer into separate file
-            buf.export(out, args.output.replace('.gltf', '.bin'))
-            # write glTF data
-            e.write(out, args.output, is_binary=False)
-
-        else:
-            # write glTF data with embedded buffer
-            e.write(out, args.output, is_binary=True)
-
-    else:
-        buf.export(out)
-        print(json.dumps(out, indent=4))
-
+    r = e.convert()
 
 
 def register(init_version):

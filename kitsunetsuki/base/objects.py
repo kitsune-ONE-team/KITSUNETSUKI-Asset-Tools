@@ -85,6 +85,13 @@ def apply_modifiers(obj, triangulate=False, apply_scale=False):
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
 
+def make_local(obj):
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(state=True)
+    set_active_object(obj)
+    bpy.ops.object.make_local()
+
+
 def get_parent(obj, level=1):
     result = obj
 

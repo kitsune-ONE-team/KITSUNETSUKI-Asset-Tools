@@ -40,7 +40,43 @@ NOT_MERGED_TYPES = (
 )
 
 
-class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
+class Exporter(object):
+    def __init__(self, args):
+        self._inputs = args.inputs
+        self._script_names = (args.exec or '').split(',')
+        self._post_script_names = (args.exec_post or '').split(',')
+        self._script_locals = {}
+
+        for i, filepath in enumerate(self._inputs or []):
+            if i == 0:
+                bpy.ops.wm.open_mainfile(filepath=filepath)
+            else:
+                bpy.ops.wm.append(filepath=filepath)
+
+    def _execute_script(self, name):
+        script = None
+
+        if os.path.isfile(name):
+            with open(name, 'r') as f:
+                script = f.read()
+        else:
+            script = bpy.data.texts.get(name).as_string()
+
+        if script:
+            code = compile(script, name, 'exec')
+            exec(code, None, self._script_locals)
+
+    def _can_merge(self, obj):
+        if is_collision(obj):
+            return False
+
+        if get_object_properties(obj):
+            return False
+
+        return True
+
+
+class _Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
     def __init__(self, args):
         self._inputs = args.inputs
         self._output = args.output
@@ -92,35 +128,6 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
 
             if 'SPEED_SCALE' in self._script_locals:
                 self._speed_scale = self._script_locals['SPEED_SCALE']
-
-    def can_merge(self, obj):
-        if not self._merge:
-            return False
-
-        collection = get_object_collection(obj)
-        if not collection:
-            return False
-
-        if is_collision(obj):
-            return False
-
-        if not is_object_visible(obj):
-            return False
-
-        obj_props = get_object_properties(obj)
-        if obj_props.get('type') in NOT_MERGED_TYPES:
-            return False
-
-        if obj.type == 'MESH':
-            for material in obj.data.materials:
-                if material.node_tree:
-                    for node in material.node_tree.nodes:
-                        if node.type == 'ATTRIBUTE':
-                            return False
-
-            return True
-
-        return False
 
     def make_root_node(self):
         raise NotImplementedError()
@@ -223,7 +230,7 @@ class Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
                 bpy.context.view_layer.objects.active.name = collection.name
                 set_active_object(None)
 
-        self._root = self.make_root_node()
+        self._root = self.make_scene()
 
         if self._export_type == 'animation':
             self.make_animation(self._root)

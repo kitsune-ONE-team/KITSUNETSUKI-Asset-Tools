@@ -48,10 +48,12 @@ class Exporter(object):
         self._script_locals = {}
 
         for i, filepath in enumerate(self._inputs or []):
+            rel_filepath = os.path.relpath(filepath, os.getcwd())
+            abs_filepath = os.path.abspath(rel_filepath)
             if i == 0:
-                bpy.ops.wm.open_mainfile(filepath=filepath)
+                bpy.ops.wm.open_mainfile(filepath=abs_filepath)
             else:
-                bpy.ops.wm.append(filepath=filepath)
+                bpy.ops.wm.append(filepath=abs_filepath)
 
     def _execute_script(self, name):
         script = None

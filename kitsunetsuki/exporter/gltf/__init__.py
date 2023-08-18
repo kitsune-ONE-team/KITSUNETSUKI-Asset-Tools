@@ -120,8 +120,8 @@ class GLTFExporter(Exporter):
         skin.extras['jointNames'] = [joint.name for joint in skin.joints]
 
     def gather_mesh_hook(
-            self, mesh, blender_mesh, blender_object, vertex_groups, modifiers,
-            skip_filter, materials, export_settings):
+            self, mesh, blender_mesh, blender_object, vertex_groups,
+            modifiers, materials, export_settings):
         mesh.extras = mesh.extras or {}
         mesh.extras['texcoordsNames'] = [uv.name for uv in blender_mesh.uv_layers]
 
@@ -225,6 +225,7 @@ class GLTFExporter(Exporter):
             'gltf_morph': True,
             'gltf_morph_normal': False,
             'gltf_morph_tangent': False,
+            'gltf_optimize_animation_keep_object': True,
 
             'gltf_lights': True,
             'gltf_lighting_mode': 'RAW',
@@ -332,6 +333,9 @@ class GLTFExporter(Exporter):
                         'selected_editable_objects': objects_merge,
                     }
                     bpy.ops.object.join(context)
+                    bpy.ops.object.transform_apply(
+                        location=False, rotation=False, scale=True,
+                        properties=False, isolate_users=False)
 
                 bpy.ops.object.select_all(action='DESELECT')
                 obj = bpy.context.view_layer.objects.active

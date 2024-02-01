@@ -25,7 +25,7 @@ from bpy_extras.io_utils import ExportHelper
 from kitsunetsuki.base.armature import is_left_bone, is_bone_matches
 from kitsunetsuki.base.objects import get_parent
 
-from ..gltf import GLTFExporter
+from ..gltf import spec, GLTFExporter
 
 
 BLENDSHAPE_PRESETS = (
@@ -54,6 +54,17 @@ class VRMExporter(GLTFExporter):
         super().__init__(args)
         self._z_up = False
         self._pose_freeze = True
+
+    @property
+    def export_settings(self):
+        settings = {}
+        settings.update(super().export_settings)
+        settings.update({
+            'gltf_keep_original_textures': False,
+            'gltf_format': 'GLB',
+        })
+
+        return settings
 
     def _add_vrm_thumbnail(self, gltf_node, filepath):
         gltf_sampler = {

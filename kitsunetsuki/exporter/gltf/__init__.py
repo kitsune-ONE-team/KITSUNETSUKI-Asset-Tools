@@ -175,7 +175,7 @@ class GLTFExporter(Exporter):
             'gltf_texturedirectory': os.path.dirname(self._output),
             'gltf_keep_original_textures': True,
 
-            'gltf_format': 'GLTF' if self._output.endswith('.gltf') else 'GLB',
+            'gltf_format': 'GLB' if self._output.endswith('.glb') else 'GLTF',
             'gltf_image_format': 'AUTO',
             'gltf_copyright': os.getenv('USERNAME'),
             'gltf_texcoords': True,
@@ -206,11 +206,14 @@ class GLTFExporter(Exporter):
             'gltf_current_frame': 0,
             'gltf_animations': True,
             'gltf_def_bones': True,
+
             'gltf_frame_range': True,
             'gltf_force_sampling': True,
             'gltf_nla_strips': False,
             'gltf_nla_strips_merged_animation_name': 'GLTF_ANIMATION',
             'gltf_optimize_animation': False,
+            'gltf_optimize_animation_keep_armature': True,
+            'gltf_optimize_animation_keep_object': True,
             'gltf_export_anim_single_armature': True,
             'gltf_rest_position_armature': False,
             'gltf_flatten_bones_hierarchy': False,
@@ -218,6 +221,8 @@ class GLTFExporter(Exporter):
             'gltf_morph_anim': True,
             'gltf_bake_animation': True,
             'gltf_negative_frames': 'SLIDE',
+            'gltf_anim_slide_to_zero': True,
+
             'gltf_export_reset_pose_bones': True,
             'gltf_skins': True,
             'gltf_all_vertex_influences': False,  # limit to 4 bones and normalize

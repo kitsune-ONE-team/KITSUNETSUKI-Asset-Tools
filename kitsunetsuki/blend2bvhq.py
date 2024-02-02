@@ -50,6 +50,9 @@ def parse_args():
     parser.add_argument(
         '-sc', '--scale', type=float, required=False,
         help='Geom scale.')
+    parser.add_argument(
+        '-nl', '--no-local-space', action='store_true', required=False,
+        help='Use local space transforms.')
 
     return parser.parse_args()
 

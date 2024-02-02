@@ -18,7 +18,7 @@ bl_info = {
     'name': 'KITSUNETSUKI Asset Tools',
     'author': 'kitsune.ONE team',
     'version': (2, 0, 0),
-    'blender': (2, 92, 0),
+    'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Exports: glTF, VRM',
     'warning': '',

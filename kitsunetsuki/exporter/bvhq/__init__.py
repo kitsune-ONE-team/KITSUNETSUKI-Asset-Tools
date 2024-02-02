@@ -39,6 +39,7 @@ class BVHQExporter(Exporter):
         super().__init__(args)
         self._action = args.action and bpy.data.actions[args.action]
         self._speed_scale = 1
+        self._no_local_space = args.no_local_space
         self._output = args.output or args.inputs[0].replace('.blend', '.bvhq')
 
     def _execute_script(self, name):
@@ -123,7 +124,7 @@ class BVHQExporter(Exporter):
             frame_data = []
             for bone_data in hierarchy:
                 bone = armature.pose.bones[bone_data['joint']]
-                if bone.parent:
+                if bone.parent and not self._no_local_space:
                     matrix = bone.parent.matrix.inverted() @ bone.matrix
                     pos = bone.parent.matrix.inverted() @ bone.head
                 else:

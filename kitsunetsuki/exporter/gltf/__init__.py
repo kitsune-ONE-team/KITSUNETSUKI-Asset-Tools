@@ -81,7 +81,7 @@ class GLTFExporter(Exporter):
         active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
         unused_skins = export_settings['vtree'].get_unused_skins()
         for idx, scene in enumerate(scenes):
-            exporter.add_scene(scene, idx == active_scene_idx)
+            exporter.add_scene(scene, idx == active_scene_idx, export_settings)
         for animation in animations:
             exporter.add_animation(animation)
         exporter.traverse_unused_skins(unused_skins)
@@ -242,6 +242,7 @@ class GLTFExporter(Exporter):
             'gltf_user_extensions': [self],
             'post_export_callbacks': [],
             'pre_export_callbacks': [],
+            'gltf_gpu_instances': False,
         }
 
     def convert(self):

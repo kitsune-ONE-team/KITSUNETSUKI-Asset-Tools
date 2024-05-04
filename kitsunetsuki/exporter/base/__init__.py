@@ -75,6 +75,9 @@ class Exporter(object):
         if get_object_properties(obj):
             return False
 
+        if obj.type in ('LAMP', 'LIGHT'):
+            return False
+
         return True
 
 

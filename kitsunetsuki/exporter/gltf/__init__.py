@@ -243,6 +243,8 @@ class GLTFExporter(Exporter):
             'post_export_callbacks': [],
             'pre_export_callbacks': [],
             'gltf_gpu_instances': False,
+            'gltf_add_webp': None,
+            'gltf_vertex_influences_nb': 4,
         }
 
     def convert(self):
@@ -335,13 +337,18 @@ class GLTFExporter(Exporter):
                 if len(objects_merge) > 1:
                     context = {
                         'active_object': objects_merge[0],
-                        'selected_objects': objects_merge,
-                        'selected_editable_objects': objects_merge,
+                        # 'selected_objects': objects_merge,
+                        # 'selected_editable_objects': objects_merge,
                     }
-                    bpy.ops.object.join(context)
-                    bpy.ops.object.transform_apply(
-                        location=False, rotation=False, scale=True,
-                        properties=False, isolate_users=False)
+                    with bpy.context.temp_override(**context):
+                        try:
+                            bpy.ops.object.join()
+                            bpy.ops.object.transform_apply(
+                                location=False, rotation=False, scale=True,
+                                properties=False, isolate_users=False)
+                        except Exception as e:
+                            print(context)
+                            raise e
 
                 bpy.ops.object.select_all(action='DESELECT')
                 obj = bpy.context.view_layer.objects.active

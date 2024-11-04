@@ -16,9 +16,14 @@
 
 import argparse
 import json
-import struct
+import os
+import sys
+import time
 
-from . import bl_info
+if __name__ == '__main__':
+    sys.path.insert(0, os.path.dirname(__file__))
+
+from kitsunetsuki import bl_info
 
 
 def parse_args():
@@ -63,11 +68,8 @@ def parse_args():
         '-k', '--keep', action='store_true',
         help='Keep the original objects and meshes before merging.')
     parser.add_argument(
-        '-z', '--z-up', action='store_true',
-        help="Skip conversion and keep Blender's Z-Up world.")
-    parser.add_argument(
-        '-pf', '--pose-freeze', action='store_true',
-        help="Freezes pose, bakes bone rotation and scale.")
+        '-t', '--textures', action='store_true',
+        help='Embed textures.')
     parser.add_argument(
         '-nuv', '--no-extra-uv', action='store_true',
         help="Don't export extra non-primary UV.")
@@ -84,22 +86,31 @@ def parse_args():
         '-sorg', '--set-origin', action='store_true',
         help="Set origin to center of bounds for collisions.")
     parser.add_argument(
-        '-prim', '--split-primitives', action='store_true',
-        help="Split primitives into separate vertex buffers.")
-    parser.add_argument(
         '-nw', '--normalize-weights', action='store_true',
         help="Normalize vertex weights.")
 
-    return parser.parse_args()
+    args = sys.argv
+    if '--' in args:
+        args = args[args.index('--') + 1:]
+    return parser.parse_args(args)
 
 
 def main():
+    start = time.time()
     args = parse_args()
 
-    from kitsunetsuki.exporter.gltf import GLTFExporter
+    from kitsunetsuki.exporter.vrm import VRMExporter
 
-    e = GLTFExporter(args)
+    e = VRMExporter(args)
     r = e.convert()
+
+    seconds_total = round(time.time() - start)
+    if seconds_total >= 60:
+        seconds = seconds_total % 60
+        minutes = math.floor(seconds_total / 60)
+        print(f'Completed in {minutes} minutes {seconds} seconds.')
+    else:
+        print(f'Completed in {seconds_total} seconds.')
 
 
 def register(init_version):
@@ -109,17 +120,17 @@ def register(init_version):
     if init_version != version:
         raise Exception(f"Version mismatch: {init_version} != {version}")
 
-    from kitsunetsuki.exporter.gltf import GLTFExporterOperator, export
-    bpy.utils.register_class(GLTFExporterOperator)
+    from kitsunetsuki.exporter.vrm import VRMExporterOperator, export
+    bpy.utils.register_class(VRMExporterOperator)
     bpy.types.TOPBAR_MT_file_export.append(export)
 
 
 def unregister():
     import bpy
 
-    from kitsunetsuki.exporter.gltf import GLTFExporterOperator, export
+    from kitsunetsuki.exporter.vrm import VRMExporterOperator, export
     bpy.types.TOPBAR_MT_file_export.remove(export)
-    bpy.utils.unregister_class(GLTFExporterOperator)
+    bpy.utils.unregister_class(VRMExporterOperator)
 
 
 if __name__ == '__main__':

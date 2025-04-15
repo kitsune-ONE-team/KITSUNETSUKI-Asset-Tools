@@ -54,6 +54,7 @@ class VRMExporter(GLTFExporter):
         super().__init__(args)
         self._z_up = False
         self._pose_freeze = True
+        self._export_textures = False
 
     @property
     def export_settings(self):
@@ -547,11 +548,11 @@ class VRMExporter(GLTFExporter):
                                 break
 
                 # Wiggle Bones addon
-                # https://blenderartists.org/t/wiggle-bones-a-jiggle-bone-implementation-for-2-8/1154726
-                if pose_bone.get('jiggle_enable', False):
+                # https://github.com/shteeve3d/blender-wiggle
+                if pose_bone.get('jiggle_enable', None) is not None:
                     # search for root bone
                     while (pose_bone.parent and
-                            pose_bone.parent.get('jiggle_enable', False)):
+                            pose_bone.parent.get('jiggle_enable', None) is not None):
                         pose_bone = pose_bone.parent
 
                     if pose_bone.name in vrm_springs:

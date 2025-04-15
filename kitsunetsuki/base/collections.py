@@ -20,7 +20,7 @@ def get_object_collections(obj):
     results = []
 
     for collection in bpy.data.collections:
-        if collection.name == 'RigidBodyWorld':
+        if collection.name.startswith('RigidBody'):
             continue
 
         for obj2 in collection.objects:

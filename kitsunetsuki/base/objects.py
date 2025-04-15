@@ -66,6 +66,8 @@ def apply_modifiers(obj, triangulate=False, apply_scale=False):
             is_activated = True
 
         try:
+            set_active_object(obj)
+            bpy.ops.object.make_single_user(object=True, obdata=True)
             bpy.ops.object.modifier_apply(modifier=mod.name)
         except Exception as e:
             print('FAILED TO APPLY MODIFIER {mod_name} [{mod_type}] ON OBJECT {obj_name}'.format(**{

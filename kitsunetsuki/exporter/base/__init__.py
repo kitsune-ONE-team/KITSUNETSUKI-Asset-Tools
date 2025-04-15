@@ -14,6 +14,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
+import bmesh
 import os
 
 from kitsunetsuki.base.collections import get_object_collection
@@ -53,7 +54,11 @@ class Exporter(object):
             if i == 0:
                 bpy.ops.wm.open_mainfile(filepath=abs_filepath)
             else:
-                bpy.ops.wm.append(filepath=abs_filepath)
+                objects = []
+                with bpy.data.libraries.load(abs_filepath) as (data_from, data_to):
+                    for name in data_from.objects:
+                        objects.append({'name': name})
+                bpy.ops.wm.append(directory=f'{filepath}/Object/', files=objects)
 
     def _execute_script(self, name):
         script = None
@@ -65,6 +70,7 @@ class Exporter(object):
             script = bpy.data.texts.get(name).as_string()
 
         if script:
+            print(f'Executing script "{name}"')
             code = compile(script, name, 'exec')
             exec(code, None, self._script_locals)
 
@@ -75,10 +81,26 @@ class Exporter(object):
         if get_object_properties(obj):
             return False
 
-        if obj.type in ('LAMP', 'LIGHT'):
+        if obj.type in ('LAMP', 'LIGHT', 'EMPTY'):
             return False
 
         return True
+
+    def make_cube(self):
+        # Create an empty mesh and the object.
+        mesh = bpy.data.meshes.new('Basic_Cube')
+        cube = bpy.data.objects.new('Basic_Cube', mesh)
+
+        # Construct the bmesh cube and assign it to the blender mesh.
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=10.0)
+        bm.to_mesh(mesh)
+        bm.free()
+
+        mat = bpy.data.materials.new(name='Basic_Cube')
+        cube.data.materials.append(mat)
+
+        return cube
 
 
 class _Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
@@ -212,7 +234,7 @@ class _Exporter(GeomMixin, MaterialMixin, TextureMixin, VertexMixin):
 
         if self._merge:
             for collection in bpy.data.collections:
-                if collection.name == 'RigidBodyWorld':
+                if collection.name.startswith('RigidBody'):
                     continue
 
                 objects = list(filter(self.can_merge, collection.objects))

@@ -16,9 +16,13 @@
 
 import argparse
 import json
-import struct
+import os
+import sys
 
-from . import bl_info
+if __name__ == '__main__':
+    sys.path.insert(0, os.path.dirname(__file__))
+
+from kitsunetsuki import bl_info
 
 
 def parse_args():
@@ -54,7 +58,10 @@ def parse_args():
         '-nl', '--no-local-space', action='store_true', required=False,
         help='Use local space transforms.')
 
-    return parser.parse_args()
+    args = sys.argv
+    if '--' in args:
+        args = args[args.index('--') + 1:]
+    return parser.parse_args(args)
 
 
 def main():

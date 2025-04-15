@@ -27,15 +27,16 @@ from kitsunetsuki.exporter.base import Exporter
 from kitsunetsuki.base.context import Mode
 from kitsunetsuki.base.objects import (
     apply_modifiers, is_collision, make_local, get_object_properties)
-from kitsunetsuki.base.mesh import obj2mesh
 
-from io_scene_gltf2.blender.com import gltf2_blender_json
-from io_scene_gltf2.blender.exp import gltf2_blender_gather
-from io_scene_gltf2.blender.exp import gltf2_blender_gltf2_exporter
-from io_scene_gltf2.io.exp import gltf2_io_export
+from io_scene_gltf2 import ExportGLTF2_Base
+from io_scene_gltf2.blender.com.json_util import BlenderJSONEncoder
+from io_scene_gltf2.blender.exp import export as blender_export
+from io_scene_gltf2.blender.exp import gather as blender_gather
+from io_scene_gltf2.blender.exp.exporter import GlTF2Exporter as BaseGlTF2Exporter
+from io_scene_gltf2.io.exp.export import save_gltf
 
 
-class JSONEncoder(gltf2_blender_json.BlenderJSONEncoder):
+class JSONEncoder(BlenderJSONEncoder):
     def __init__(self, *args, **kwargs):
         kwargs.pop('indent', None)
         super().__init__(*args, **kwargs, indent=4)
@@ -65,6 +66,34 @@ def fix_json(obj):
     return fixed
 
 
+class ExportGLTF2(ExportGLTF2_Base):
+    will_save_settings = False
+
+    def __init__(self, filepath):
+        super().__init__()
+        self.filepath = filepath
+
+        for c in reversed(self.__class__.__mro__):
+            if not hasattr(c, '__annotations__'):
+                continue
+
+            for name, field in c.__annotations__.items():
+                value = field.keywords.get('default')
+                setattr(self, name, value)
+
+    def check(self, context):
+        pass
+
+    def execute(self, context):
+        def save(context, export_settings):
+            self.export_settings = export_settings
+
+        save_old = blender_export.save
+        blender_export.save = save
+        super().execute(context)
+        blender_export.save = save_old
+
+
 class GLTFExporter(Exporter):
     def __init__(self, args):
         super().__init__(args)
@@ -72,19 +101,23 @@ class GLTFExporter(Exporter):
         self._pose_freeze = hasattr(args, 'pose_freeze') and args.pose_freeze
         self._merge = args.merge
         self._export_type = args.export
+        self._export_textures = args.textures
         self._output = args.output or args.inputs[0].replace('.blend', '.gltf')
         self._bone_tails = {}
+        self._no_extra_uv = args.no_extra_uv is True
 
     def _export(self, export_settings):
-        exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(export_settings)
+        exporter = BaseGlTF2Exporter(export_settings)
 
-        active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
-        unused_skins = export_settings['vtree'].get_unused_skins()
+        active_scene_idx, scenes, animations = blender_gather.gather_gltf2(export_settings)
+        if self._export_type != 'collision':
+            unused_skins = export_settings['vtree'].get_unused_skins()
         for idx, scene in enumerate(scenes):
             exporter.add_scene(scene, idx == active_scene_idx, export_settings)
-        for animation in animations:
-            exporter.add_animation(animation)
-        exporter.traverse_unused_skins(unused_skins)
+        if self._export_type != 'collision':
+            for animation in animations:
+                exporter.add_animation(animation)
+            exporter.traverse_unused_skins(unused_skins)
 
         buf = bytes()
         dirname = os.path.dirname(self._output) + os.sep
@@ -94,7 +127,8 @@ class GLTFExporter(Exporter):
         else:
             buf = exporter.finalize_buffer(dirname, is_glb=True)
 
-        exporter.finalize_images()
+        if self._export_type != 'collision':
+            exporter.finalize_images()
         exporter.traverse_extensions()
         data = fix_json(exporter.glTF.to_dict())
 
@@ -110,6 +144,9 @@ class GLTFExporter(Exporter):
 
             outpath = Path(os.path.dirname(self._output)).resolve().absolute()
             for image in data.get('images') or []:
+                if 'uri' not in image:
+                    continue
+
                 imgpath = Path(os.path.join(outpath, image['uri'])).resolve().absolute()
                 image['uri'] = os.path.relpath(imgpath, outpath)
 
@@ -122,8 +159,18 @@ class GLTFExporter(Exporter):
     def gather_mesh_hook(
             self, mesh, blender_mesh, blender_object, vertex_groups,
             modifiers, materials, export_settings):
+        if self._export_type == 'collision':
+            return
+
         mesh.extras = mesh.extras or {}
         mesh.extras['texcoordsNames'] = [uv.name for uv in blender_mesh.uv_layers]
+
+        if blender_mesh.shape_keys:
+            mesh.extras['targetNames'] = []
+            for blender_shape_key in blender_mesh.shape_keys.key_blocks:
+                if blender_shape_key.name == 'Basis':
+                    continue
+                mesh.extras['targetNames'].append(blender_shape_key.name)
 
     def gather_node_hook(self, node, blender_object, export_settings):
         if is_collision(blender_object):
@@ -169,43 +216,29 @@ class GLTFExporter(Exporter):
 
     @property
     def export_settings(self):
-        return {
+        export_settings = {}
+
+        export = ExportGLTF2(self._output)
+        export.execute(bpy.context)
+        export_settings.update(export.export_settings)
+
+        export_settings.update({
             'gltf_filepath': self._output,
             'gltf_filedirectory': os.path.dirname(self._output),
             'gltf_texturedirectory': os.path.dirname(self._output),
-            'gltf_keep_original_textures': True,
+            'gltf_keep_original_textures': not self._export_textures,
 
-            'gltf_format': 'GLB' if self._output.endswith('.glb') else 'GLTF',
-            'gltf_image_format': 'AUTO',
+            'gltf_format': 'GLTF_SEPARATE' if self._output.endswith('.gltf') else 'GLB',
             'gltf_copyright': os.getenv('USERNAME'),
-            'gltf_texcoords': True,
-            'gltf_normals': True,
             'gltf_tangents': True,
-            'gltf_loose_edges': False,
-            'gltf_loose_points': False,
-
-            'gltf_draco_mesh_compression': False,
-
-            'gltf_materials': 'EXPORT',
-            'gltf_colors': True,
             'gltf_attributes': True,
-            'gltf_cameras': False,
-
-            'gltf_original_specular': False,
+            'gltf_cameras': True,
 
             'gltf_visible': True,  # export visible objects only
-            'gltf_renderable': False,
-
-            'gltf_active_collection': False,
-            'gltf_active_scene': True,
-
-            'gltf_selected': False,
             'gltf_extras': True,
             'gltf_yup': not self._z_up,
             'gltf_apply': True,
-            'gltf_current_frame': 0,
-            'gltf_animations': True,
-            'gltf_def_bones': True,
+            'gltf_animations': False,
 
             'gltf_frame_range': True,
             'gltf_force_sampling': True,
@@ -218,34 +251,40 @@ class GLTFExporter(Exporter):
             'gltf_rest_position_armature': False,
             'gltf_flatten_bones_hierarchy': False,
             'gltf_animation_mode': 'ACTIONS',
-            'gltf_morph_anim': True,
             'gltf_bake_animation': True,
-            'gltf_negative_frames': 'SLIDE',
             'gltf_anim_slide_to_zero': True,
+
+            'gltf_try_sparse_sk': False,
+            'gltf_try_omit_sparse_sk': True,
 
             'gltf_export_reset_pose_bones': True,
             'gltf_skins': True,
-            'gltf_all_vertex_influences': False,  # limit to 4 bones and normalize
             'gltf_frame_step': 1,
             'gltf_morph': True,
             'gltf_morph_normal': False,
             'gltf_morph_tangent': False,
-            'gltf_optimize_animation_keep_object': True,
+            'gltf_morph_anim': True,
+            'gltf_armature_object_remove': False,
 
             'gltf_lights': True,
-            'gltf_lighting_mode': 'RAW',
+            'gltf_lighting_mode': 'RAW',  # TODO: switch to COMPAT
 
             'gltf_binary': bytearray(),
             'gltf_binaryfilename': os.path.basename(self._output.replace('.gltf', '.bin')),
-            # 'gltf_embed_buffers': not self._output.endswith('.gltf'),
 
             'gltf_user_extensions': [self],
             'post_export_callbacks': [],
             'pre_export_callbacks': [],
-            'gltf_gpu_instances': False,
-            'gltf_add_webp': None,
-            'gltf_vertex_influences_nb': 4,
-        }
+        })
+
+        if self._export_type == 'collision':
+            export_settings.update({
+                'gltf_tangents': False,
+                'gltf_texcoords': False,
+                # 'gltf_materials': False,  # <- segfaults T_T
+            })
+
+        return export_settings
 
     def convert(self):
         if self._script_names:
@@ -259,7 +298,7 @@ class GLTFExporter(Exporter):
 
         for c in bpy.data.collections:
             # skip special collections
-            if c.name in ('RigidBodyConstraints', 'RigidBodyWorld'):
+            if c.name.startswith('RigidBody'):
                 continue
 
             if c.hide_viewport:
@@ -269,7 +308,7 @@ class GLTFExporter(Exporter):
 
             objects = []
             objects_merge = []
-            for obj in c.objects:
+            for obj in list(c.objects):
                 if obj.hide_viewport:
                     obj.hide_set(True)
                     continue
@@ -277,9 +316,11 @@ class GLTFExporter(Exporter):
                 if self._export_type == 'collision':
                     if obj.type == 'MESH' and not is_collision(obj):
                         obj.hide_set(True)
-                        continue
 
                 if obj.hide_get():
+                    continue
+
+                if obj.type == 'CAMERA':
                     continue
 
                 if obj.type == 'ARMATURE':
@@ -354,6 +395,17 @@ class GLTFExporter(Exporter):
                 obj = bpy.context.view_layer.objects.active
                 bpy.context.view_layer.objects.active = None
                 obj.name = c.name
+
+                if self._no_extra_uv:
+                    for layer in tuple(obj.data.uv_layers.values()):
+                        if layer.active or not layer.name:
+                            continue
+
+                        if layer.name.startswith('.'):
+                            continue
+
+                        obj.data.uv_layers.remove(layer)
+
                 # mesh = obj2mesh(obj)
                 # depsgraph = bpy.context.evaluated_depsgraph_get()
                 # obj.data = bpy.data.meshes.new_from_object(
@@ -361,17 +413,26 @@ class GLTFExporter(Exporter):
                 #     preserve_all_data_layers=True, depsgraph=depsgraph)
                 obj.data.name = c.name
 
+        # blender segfaults when there are no materials >_<
+        if self._export_type == 'collision':
+            cube = self.make_cube()
+            c = bpy.data.collections.new('New')
+            c.objects.link(cube)
+            bpy.context.scene.collection.children.link(c)
+
         if self._post_script_names:
             for script_name in self._post_script_names:
                 if script_name:
                     self._execute_script(script_name)
 
         frame = bpy.context.scene.frame_current
-
         bpy.context.scene.frame_set(0)
+
         data, buf = self._export(self.export_settings)
         data = self._process_data(data)
-        gltf2_io_export.save_gltf(data, self.export_settings, JSONEncoder, buf)
+        save_gltf(data, self.export_settings, JSONEncoder, buf)
+
+        bpy.context.scene.render.engine = 'CYCLES'
 
         bpy.context.scene.frame_set(int(frame))
 

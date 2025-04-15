@@ -47,6 +47,41 @@ class BVHQExporter(Exporter):
         if 'SPEED_SCALE' in self._script_locals:
             self._speed_scale = self._script_locals['SPEED_SCALE']
 
+    def _get_frames(self):
+        frame_start = bpy.context.scene.frame_start
+        frame_end = bpy.context.scene.frame_end
+
+        if self._action and armature.animation_data:
+            armature.animation_data.action = self._action
+            frame_start, frame_end = self._action.frame_range
+
+        frame_duration = int(frame_end - frame_start)
+
+        if isinstance(self._speed_scale, Callable):
+            frame = frame_start
+            while frame < frame_end:
+                bpy.context.scene.frame_current = int(frame)
+                bpy.context.scene.frame_set(int(frame))
+                bpy.context.scene.frame_subframe = frame - int(frame)
+                yield frame
+
+                speed_scale = self._speed_scale(frame)
+                frame += speed_scale
+
+        else:
+            speed_scale = self._speed_scale
+            frame_duration_scaled = round(frame_duration / speed_scale)
+            frame_duration_scale = frame_duration / frame_duration_scaled
+            frame_start_scaled = round(frame_start / frame_duration_scale)
+
+            bpy.context.scene.render.frame_map_old = frame_duration
+            bpy.context.scene.render.frame_map_new = frame_duration_scaled
+
+            for frame in range(frame_start_scaled, frame_start_scaled + frame_duration_scaled):
+                bpy.context.scene.frame_current = frame
+                bpy.context.scene.frame_set(frame)
+                yield frame
+
     def _export(self, armature):
         hierarchy = []
 
@@ -85,42 +120,12 @@ class BVHQExporter(Exporter):
             if not bone.parent:
                 add_bone(bone)
 
-        frame_start = bpy.context.scene.frame_start
-        frame_end = bpy.context.scene.frame_end
-        if self._action and armature.animation_data:
-            armature.animation_data.action = self._action
-            frame_start, frame_end = self._action.frame_range
-
-        speed_scale = 1
-        frame = float(frame_start)
-        frame_int = None
-        t = decimal.Decimal(0)
-        fps = bpy.context.scene.render.fps / bpy.context.scene.render.fps_base
-        dt = decimal.Decimal(1 / fps)
-        t += dt
-
         motion = {
             'frames': 0,
             'frame_time': 1,
             'data': [],
         }
-        while frame <= frame_end:
-            # switch frame
-            if frame_int != math.floor(frame):
-                frame_int = math.floor(frame)
-                bpy.context.scene.frame_current = frame_int
-                bpy.context.scene.frame_set(frame_int)
-
-            if isinstance(self._speed_scale, Callable):
-                speed_scale = self._speed_scale(frame_int)
-            else:
-                speed_scale = self._speed_scale
-
-            # switch subframe
-            if speed_scale != 1:
-                bpy.context.scene.frame_subframe = frame - frame_int
-
-            # write bone matrices
+        for frame in self._get_frames():
             frame_data = []
             for bone_data in hierarchy:
                 bone = armature.pose.bones[bone_data['joint']]
@@ -144,10 +149,6 @@ class BVHQExporter(Exporter):
                     frame_data.append(channels[channel])
             motion['data'].append(frame_data)
             motion['frames'] += 1
-
-            # advance to the next frame
-            frame += speed_scale
-            t += dt
 
         return {
             'hierarchy': hierarchy,
@@ -203,6 +204,7 @@ class BVHQExporter(Exporter):
                 if script_name:
                     self._execute_script(script_name)
 
+        armature = None
         for c in bpy.data.collections:
             # hide all objects inside the collection because we can't hide the collection
             if c.hide_viewport:
@@ -231,8 +233,7 @@ class BVHQExporter(Exporter):
             bpy.ops.object.select_all(action='DESELECT')
             for obj in objects:
                 if obj.type == 'ARMATURE':
-                    bpy.context.view_layer.objects.active = obj
-                    break
+                    armature = obj
 
         if self._post_script_names:
             for script_name in self._post_script_names:
@@ -242,6 +243,7 @@ class BVHQExporter(Exporter):
         frame = bpy.context.scene.frame_current
 
         bpy.context.scene.frame_set(0)
+        bpy.context.view_layer.objects.active = armature
         data = self._export(bpy.context.view_layer.objects.active)
         data = self._process_data(data)
         with open(self._output, 'w') as f:
